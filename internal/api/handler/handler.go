@@ -1,19 +1,51 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/labstack/echo/v4"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	gen "github.com/ramsesyok/oss-catalog/internal/api/gen"
+	domrepo "github.com/ramsesyok/oss-catalog/internal/domain/repository"
 )
 
 type Handler struct {
+	AuditRepo domrepo.AuditLogRepository
 }
 
 // 監査ログ簡易検索 (Phase1簡易)
 // (GET /audit)
-func (*Handler) SearchAuditLogs(ctx echo.Context, params gen.SearchAuditLogsParams) error {
-	return nil
+func (h *Handler) SearchAuditLogs(ctx echo.Context, params gen.SearchAuditLogsParams) error {
+	filter := domrepo.AuditLogFilter{
+		EntityType: params.EntityType,
+		EntityID:   params.EntityId,
+		From:       params.From,
+		To:         params.To,
+	}
+
+	logs, err := h.AuditRepo.Search(ctx.Request().Context(), filter)
+	if err != nil {
+		return err
+	}
+
+	items := make([]map[string]any, len(logs))
+	for i, l := range logs {
+		item := map[string]any{
+			"id":         l.ID,
+			"entityType": l.EntityType,
+			"entityId":   l.EntityID,
+			"action":     l.Action,
+			"at":         l.CreatedAt,
+			"user":       l.UserName,
+		}
+		if l.Summary != nil {
+			item["summary"] = *l.Summary
+		}
+		items[i] = item
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]any{"items": items})
 }
 
 // OSSコンポーネント一覧取得
