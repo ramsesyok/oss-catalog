@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"testing"
 	"time"
@@ -32,6 +33,46 @@ func TestAuditLogRepository_Search(t *testing.T) {
 	logs, err := repo.Search(context.Background(), f)
 	require.NoError(t, err)
 	require.Len(t, logs, 1)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestAuditLogRepository_Search_AllFilters(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &AuditLogRepository{DB: db}
+
+	et := "PROJECT"
+	eid := "1"
+	from := time.Now().Add(-time.Hour)
+	to := time.Now()
+	f := domrepo.AuditLogFilter{EntityType: &et, EntityID: &eid, From: &from, To: &to}
+
+	query := regexp.QuoteMeta("SELECT id, entity_type, entity_id, action, user_name, summary, created_at FROM audit_logs WHERE entity_type = ? AND entity_id = ? AND created_at >= ? AND created_at <= ? ORDER BY created_at DESC")
+	rows := sqlmock.NewRows([]string{"id", "entity_type", "entity_id", "action", "user_name", "summary", "created_at"}).AddRow(uuid.NewString(), et, eid, "CREATE", "user", nil, to)
+	mock.ExpectQuery(query).WithArgs(et, eid, from, to).WillReturnRows(rows)
+
+	logs, err := repo.Search(context.Background(), f)
+	require.NoError(t, err)
+	require.Len(t, logs, 1)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestAuditLogRepository_Search_Error(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &AuditLogRepository{DB: db}
+	et := "PROJECT"
+	f := domrepo.AuditLogFilter{EntityType: &et}
+
+	query := regexp.QuoteMeta("SELECT id, entity_type, entity_id, action, user_name, summary, created_at FROM audit_logs WHERE entity_type = ? ORDER BY created_at DESC")
+	mock.ExpectQuery(query).WithArgs(et).WillReturnError(errors.New("fail"))
+
+	_, err = repo.Search(context.Background(), f)
+	require.Error(t, err)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 

@@ -32,6 +32,21 @@ func TestScopePolicyRepository_Get(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestScopePolicyRepository_Get_NotFound(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &ScopePolicyRepository{DB: db}
+
+	query := regexp.QuoteMeta(`SELECT id, runtime_required_default_in_scope, server_env_included, auto_mark_forks_in_scope, updated_at, updated_by FROM scope_policies LIMIT 1`)
+	mock.ExpectQuery(query).WillReturnRows(sqlmock.NewRows([]string{"id"}))
+
+	_, err = repo.Get(context.Background())
+	require.Error(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestScopePolicyRepository_Update(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
