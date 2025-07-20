@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"testing"
 	"time"
@@ -51,5 +52,43 @@ func TestOssComponentTagRepository_Replace(t *testing.T) {
 
 	err = repo.Replace(context.Background(), ossID, tagIDs)
 	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestOssComponentTagRepository_Replace_Error(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &OssComponentTagRepository{DB: db}
+	ossID := uuid.NewString()
+
+	mock.ExpectBegin()
+	delQuery := regexp.QuoteMeta(`DELETE FROM oss_component_tags WHERE oss_id = ?`)
+	mock.ExpectExec(delQuery).WithArgs(ossID).WillReturnError(errors.New("del"))
+	mock.ExpectRollback()
+
+	err = repo.Replace(context.Background(), ossID, []string{"1"})
+	require.Error(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestOssComponentTagRepository_Replace_InsertError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &OssComponentTagRepository{DB: db}
+	ossID := uuid.NewString()
+
+	mock.ExpectBegin()
+	delQuery := regexp.QuoteMeta(`DELETE FROM oss_component_tags WHERE oss_id = ?`)
+	mock.ExpectExec(delQuery).WithArgs(ossID).WillReturnResult(sqlmock.NewResult(1, 1))
+	insQuery := regexp.QuoteMeta(`INSERT INTO oss_component_tags (oss_id, tag_id) VALUES (?, ?)`)
+	mock.ExpectExec(insQuery).WithArgs(ossID, "1").WillReturnError(errors.New("ins"))
+	mock.ExpectRollback()
+
+	err = repo.Replace(context.Background(), ossID, []string{"1"})
+	require.Error(t, err)
 	require.NoError(t, mock.ExpectationsWereMet())
 }

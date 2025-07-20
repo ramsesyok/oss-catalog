@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"testing"
 	"time"
@@ -29,6 +30,21 @@ func TestTagRepository_List(t *testing.T) {
 	tags, err := repo.List(context.Background())
 	require.NoError(t, err)
 	require.Len(t, tags, 1)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestTagRepository_List_Error(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &TagRepository{DB: db}
+
+	query := regexp.QuoteMeta(`SELECT id, name, created_at FROM tags ORDER BY created_at DESC`)
+	mock.ExpectQuery(query).WillReturnError(errors.New("fail"))
+
+	_, err = repo.List(context.Background())
+	require.Error(t, err)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
