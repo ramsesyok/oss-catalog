@@ -6,10 +6,10 @@ import (
 	"github.com/ramsesyok/oss-catalog/internal/domain/model"
 )
 
-// ScopePolicyRepository defines DB operations for ScopePolicy.
+// ScopePolicyRepository は ScopePolicy の永続化処理を定義する。
 type ScopePolicyRepository interface {
-	// Get returns current scope policy. Returns nil if not found.
+	// Get は現在のポリシーを取得する。存在しない場合は nil を返す。
 	Get(ctx context.Context) (*model.ScopePolicy, error)
-	// Update upserts the scope policy record.
+	// Update はポリシーを登録または更新する。
 	Update(ctx context.Context, p *model.ScopePolicy) error
 }

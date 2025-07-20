@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-// ProjectUsage represents OSS usage within a project.
+// ProjectUsage はプロジェクト内での OSS 利用状況を表す。
 type ProjectUsage struct {
 	ID               string
 	ProjectID        string

@@ -6,7 +6,7 @@ import (
 	"github.com/ramsesyok/oss-catalog/internal/domain/model"
 )
 
-// ProjectFilter filters project listing.
+// ProjectFilter はプロジェクト一覧取得の条件を表す。
 type ProjectFilter struct {
 	Code string
 	Name string
@@ -14,7 +14,7 @@ type ProjectFilter struct {
 	Size int
 }
 
-// ProjectRepository defines DB operations for Project.
+// ProjectRepository はプロジェクトの永続化処理を定義する。
 type ProjectRepository interface {
 	Search(ctx context.Context, f ProjectFilter) ([]model.Project, int, error)
 	Get(ctx context.Context, id string) (*model.Project, error)

@@ -7,7 +7,7 @@ import (
 	"github.com/ramsesyok/oss-catalog/internal/domain/model"
 )
 
-// ProjectUsageFilter filters usage listing.
+// ProjectUsageFilter はプロジェクト利用状況検索の条件を表す。
 type ProjectUsageFilter struct {
 	ProjectID   string
 	ScopeStatus string
@@ -17,7 +17,7 @@ type ProjectUsageFilter struct {
 	Size        int
 }
 
-// ProjectUsageRepository defines DB operations for ProjectUsage.
+// ProjectUsageRepository は ProjectUsage の永続化処理を定義する。
 type ProjectUsageRepository interface {
 	Search(ctx context.Context, f ProjectUsageFilter) ([]model.ProjectUsage, int, error)
 	Create(ctx context.Context, u *model.ProjectUsage) error

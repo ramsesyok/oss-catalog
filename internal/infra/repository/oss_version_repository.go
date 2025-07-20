@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 
 	"github.com/lib/pq"
 
@@ -32,7 +31,7 @@ func (r *OssVersionRepository) Search(ctx context.Context, f domrepo.OssVersionF
 		wheres = append(wheres, "scope_status = ?")
 		args = append(args, f.ScopeStatus)
 	}
-	whereSQL := "WHERE " + strings.Join(wheres, " AND ")
+	whereSQL := whereClause(wheres)
 
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM oss_versions %s", whereSQL)
 	row := r.DB.QueryRowContext(ctx, countQuery, args...)
@@ -61,34 +60,16 @@ func (r *OssVersionRepository) Search(ctx context.Context, f domrepo.OssVersionF
 		if err := rows.Scan(&v.ID, &v.OssID, &v.Version, &releaseDate, &licenseRaw, &licenseConc, &purl, &cpeList, &hash, &v.Modified, &modDesc, &v.ReviewStatus, &lastReviewed, &v.ScopeStatus, &supplier, &fork, &v.CreatedAt, &v.UpdatedAt); err != nil {
 			return nil, 0, err
 		}
-		if releaseDate.Valid {
-			v.ReleaseDate = &releaseDate.Time
-		}
-		if licenseRaw.Valid {
-			v.LicenseExpressionRaw = &licenseRaw.String
-		}
-		if licenseConc.Valid {
-			v.LicenseConcluded = &licenseConc.String
-		}
-		if purl.Valid {
-			v.Purl = &purl.String
-		}
+		v.ReleaseDate = timePtr(releaseDate)
+		v.LicenseExpressionRaw = strPtr(licenseRaw)
+		v.LicenseConcluded = strPtr(licenseConc)
+		v.Purl = strPtr(purl)
 		v.CpeList = []string(cpeList)
-		if hash.Valid {
-			v.HashSha256 = &hash.String
-		}
-		if modDesc.Valid {
-			v.ModificationDescription = &modDesc.String
-		}
-		if lastReviewed.Valid {
-			v.LastReviewedAt = &lastReviewed.Time
-		}
-		if supplier.Valid {
-			v.SupplierType = &supplier.String
-		}
-		if fork.Valid {
-			v.ForkOriginURL = &fork.String
-		}
+		v.HashSha256 = strPtr(hash)
+		v.ModificationDescription = strPtr(modDesc)
+		v.LastReviewedAt = timePtr(lastReviewed)
+		v.SupplierType = strPtr(supplier)
+		v.ForkOriginURL = strPtr(fork)
 		versions = append(versions, v)
 	}
 	return versions, total, rows.Err()
@@ -106,34 +87,16 @@ func (r *OssVersionRepository) Get(ctx context.Context, id string) (*model.OssVe
 	if err := row.Scan(&v.ID, &v.OssID, &v.Version, &releaseDate, &licenseRaw, &licenseConc, &purl, &cpeList, &hash, &v.Modified, &modDesc, &v.ReviewStatus, &lastReviewed, &v.ScopeStatus, &supplier, &fork, &v.CreatedAt, &v.UpdatedAt); err != nil {
 		return nil, err
 	}
-	if releaseDate.Valid {
-		v.ReleaseDate = &releaseDate.Time
-	}
-	if licenseRaw.Valid {
-		v.LicenseExpressionRaw = &licenseRaw.String
-	}
-	if licenseConc.Valid {
-		v.LicenseConcluded = &licenseConc.String
-	}
-	if purl.Valid {
-		v.Purl = &purl.String
-	}
+	v.ReleaseDate = timePtr(releaseDate)
+	v.LicenseExpressionRaw = strPtr(licenseRaw)
+	v.LicenseConcluded = strPtr(licenseConc)
+	v.Purl = strPtr(purl)
 	v.CpeList = []string(cpeList)
-	if hash.Valid {
-		v.HashSha256 = &hash.String
-	}
-	if modDesc.Valid {
-		v.ModificationDescription = &modDesc.String
-	}
-	if lastReviewed.Valid {
-		v.LastReviewedAt = &lastReviewed.Time
-	}
-	if supplier.Valid {
-		v.SupplierType = &supplier.String
-	}
-	if fork.Valid {
-		v.ForkOriginURL = &fork.String
-	}
+	v.HashSha256 = strPtr(hash)
+	v.ModificationDescription = strPtr(modDesc)
+	v.LastReviewedAt = timePtr(lastReviewed)
+	v.SupplierType = strPtr(supplier)
+	v.ForkOriginURL = strPtr(fork)
 	return &v, nil
 }
 

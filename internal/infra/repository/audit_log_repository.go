@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 
 	"github.com/ramsesyok/oss-catalog/internal/domain/model"
 	domrepo "github.com/ramsesyok/oss-catalog/internal/domain/repository"
@@ -37,10 +36,7 @@ func (r *AuditLogRepository) Search(ctx context.Context, f domrepo.AuditLogFilte
 		wheres = append(wheres, "created_at <= ?")
 		args = append(args, *f.To)
 	}
-	whereSQL := ""
-	if len(wheres) > 0 {
-		whereSQL = "WHERE " + strings.Join(wheres, " AND ")
-	}
+	whereSQL := whereClause(wheres)
 	query := fmt.Sprintf("SELECT id, entity_type, entity_id, action, user_name, summary, created_at FROM audit_logs %s ORDER BY created_at DESC", whereSQL)
 	rows, err := r.DB.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -55,9 +51,7 @@ func (r *AuditLogRepository) Search(ctx context.Context, f domrepo.AuditLogFilte
 		if err := rows.Scan(&l.ID, &l.EntityType, &l.EntityID, &l.Action, &l.UserName, &summary, &l.CreatedAt); err != nil {
 			return nil, err
 		}
-		if summary.Valid {
-			l.Summary = &summary.String
-		}
+		l.Summary = strPtr(summary)
 		logs = append(logs, l)
 	}
 	return logs, rows.Err()

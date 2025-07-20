@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-// Project represents a delivery unit project.
+// Project はデリバリーユニットのプロジェクトを表すモデル。
 type Project struct {
 	ID            string
 	ProjectCode   string

@@ -6,7 +6,7 @@ import (
 	"github.com/ramsesyok/oss-catalog/internal/domain/model"
 )
 
-// OssVersionFilter filters search results.
+// OssVersionFilter は OSS バージョン検索の条件を表す。
 type OssVersionFilter struct {
 	OssID        string
 	ReviewStatus string
@@ -15,7 +15,7 @@ type OssVersionFilter struct {
 	Size         int
 }
 
-// OssVersionRepository defines DB operations for OssVersion.
+// OssVersionRepository は OSS バージョンの永続化処理を定義する。
 type OssVersionRepository interface {
 	Search(ctx context.Context, f OssVersionFilter) ([]model.OssVersion, int, error)
 	Get(ctx context.Context, id string) (*model.OssVersion, error)

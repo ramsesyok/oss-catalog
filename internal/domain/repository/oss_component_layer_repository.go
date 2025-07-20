@@ -2,10 +2,10 @@ package repository
 
 import "context"
 
-// OssComponentLayerRepository defines operations on oss_component_layers table.
+// OssComponentLayerRepository は oss_component_layers テーブル操作を定義する。
 type OssComponentLayerRepository interface {
-	// ListByOssID returns layers associated with a component ordered by layer.
+	// ListByOssID は指定コンポーネントに紐づくレイヤーを取得する。
 	ListByOssID(ctx context.Context, ossID string) ([]string, error)
-	// Replace replaces layers for a component with given layers.
+	// Replace はレイヤーを置き換える。
 	Replace(ctx context.Context, ossID string, layers []string) error
 }

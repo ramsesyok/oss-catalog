@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/ramsesyok/oss-catalog/internal/domain/model"
@@ -35,7 +34,7 @@ func (r *ProjectUsageRepository) Search(ctx context.Context, f domrepo.ProjectUs
 		wheres = append(wheres, "direct_dependency = ?")
 		args = append(args, *f.Direct)
 	}
-	whereSQL := "WHERE " + strings.Join(wheres, " AND ")
+	whereSQL := whereClause(wheres)
 
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM project_usages %s", whereSQL)
 	row := r.DB.QueryRowContext(ctx, countQuery, args...)
@@ -61,15 +60,9 @@ func (r *ProjectUsageRepository) Search(ctx context.Context, f domrepo.ProjectUs
 		if err := rows.Scan(&u.ID, &u.ProjectID, &u.OssID, &u.OssVersionID, &u.UsageRole, &u.ScopeStatus, &note, &u.DirectDependency, &u.AddedAt, &evalAt, &evalBy); err != nil {
 			return nil, 0, err
 		}
-		if note.Valid {
-			u.InclusionNote = &note.String
-		}
-		if evalAt.Valid {
-			u.EvaluatedAt = &evalAt.Time
-		}
-		if evalBy.Valid {
-			u.EvaluatedBy = &evalBy.String
-		}
+		u.InclusionNote = strPtr(note)
+		u.EvaluatedAt = timePtr(evalAt)
+		u.EvaluatedBy = strPtr(evalBy)
 		usages = append(usages, u)
 	}
 	return usages, total, rows.Err()

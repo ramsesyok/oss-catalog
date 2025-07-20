@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-// ScopePolicy represents automatic scope determination policy.
+// ScopePolicy は自動スコープ判定のポリシーを表す。
 type ScopePolicy struct {
 	ID                            string
 	RuntimeRequiredDefaultInScope bool
