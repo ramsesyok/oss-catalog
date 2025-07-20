@@ -55,10 +55,10 @@
 
 | タスク            | コマンド                                                     | 目的            |
 | -------------- | -------------------------------------------------------- | ------------- |
-| types+server生成 | `make generate`                                          | OpenAPI仕様変更反映 |
-| 差分検査           | `make generate && git diff --exit-code internal/api/gen` | 未生成検出         |
+| types+server生成 | `go generate`                                          | OpenAPI仕様変更反映 |
+| 差分検査           | `go generate && git diff --exit-code internal/api/gen` | 未生成検出         |
 
-> OpenAPI スキーマの *modelsのみ変更* の場合でも `make generate` を実行し、`api.gen.go` の差分を確認。
+> OpenAPI スキーマの *modelsのみ変更* の場合でも `go generate` を実行し、`api.gen.go` の差分を確認。
 
 ### SQLite 併用指針
 
@@ -138,24 +138,6 @@ role == RUNTIME_REQUIRED && !policy.runtimeRequiredDefaultInScope => REVIEW_NEED
 
 ---
 
-## 10. 代表コマンド / Makefile 抜粋 (AI は必要に応じ実行提案のみ)
-
-```makefile
-OPENAPI=internal/api/openapi.yaml
-GEN_DIR=internal/api/gen
-
-.PHONY: generate
-generate:
-	@mkdir -p $(GEN_DIR)
-	oapi-codegen -config internal/api/oapi-codegen.yaml $(OPENAPI) > $(GEN_DIR)/api.gen.go
-
-.PHONY: test
-test:
-	go test ./...
-```
-
----
-
 ## 11. テスト方針（最小）
 
 | 種別                    | 必須カバレッジ目安      | 主対象            |
@@ -166,12 +148,13 @@ test:
 
 失敗時: `t.Helper()` 使用、`require` 系で即時失敗。
 
+和田卓人（twada）さんが行っているテスト駆動開発を基本としてください。
 ---
 
 ## 12. ワークフロー (AI 推奨手順)
 
 1. 仕様差分確認 (openapi.yaml 変更?)
-2. `make generate` 実行し生成差分確認
+2. `go generate` 実行し生成差分確認
 3. 新/変更ハンドラ stub を `handler` に追加
 4. Service / Repository 実装・テスト更新
 5. `go vet` / `go test` / generate 差分ゼロを確認
@@ -207,7 +190,7 @@ test:
 
 ## 15. DoD (Definition of Done) チェックリスト
 
-* [ ] `make generate` 後に生成差分なし
+* [ ] `go generate` 後に生成差分なし
 * [ ] 主要ビジネス分岐のテスト追加 / 既存テスト緑
 * [ ] 新規公開エンドポイントはエラーパス(404/400)テスト完備
 * [ ] ログに機微情報なし

@@ -2,7 +2,6 @@ module github.com/ramsesyok/oss-catalog
 
 go 1.24.3
 
-//go:generate go tool oapi-codegen -config cfg.yaml ../../api.yaml
 tool github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
 
 require (
