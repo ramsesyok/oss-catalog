@@ -1,17 +1,23 @@
 package handler
 
 import (
+	"database/sql"
+	"errors"
 	"net/http"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	gen "github.com/ramsesyok/oss-catalog/internal/api/gen"
+	"github.com/ramsesyok/oss-catalog/internal/domain/model"
 	domrepo "github.com/ramsesyok/oss-catalog/internal/domain/repository"
 )
 
 type Handler struct {
-	AuditRepo domrepo.AuditLogRepository
+	AuditRepo       domrepo.AuditLogRepository
+	ScopePolicyRepo domrepo.ScopePolicyRepository
 }
 
 // 監査ログ簡易検索 (Phase1簡易)
@@ -176,14 +182,56 @@ func (*Handler) UpdateProjectUsageScope(ctx echo.Context, projectId openapi_type
 
 // 現行スコープポリシー取得
 // (GET /scope/policy)
-func (*Handler) GetScopePolicy(ctx echo.Context) error {
-	return nil
+func (h *Handler) GetScopePolicy(ctx echo.Context) error {
+	p, err := h.ScopePolicyRepo.Get(ctx.Request().Context())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return echo.NewHTTPError(http.StatusNotFound, "policy not found")
+		}
+		return err
+	}
+	uid := uuid.MustParse(p.ID)
+	res := gen.ScopePolicy{
+		Id:                            &uid,
+		RuntimeRequiredDefaultInScope: &p.RuntimeRequiredDefaultInScope,
+		ServerEnvIncluded:             &p.ServerEnvIncluded,
+		AutoMarkForksInScope:          &p.AutoMarkForksInScope,
+		UpdatedAt:                     &p.UpdatedAt,
+		UpdatedBy:                     &p.UpdatedBy,
+	}
+	return ctx.JSON(http.StatusOK, res)
 }
 
 // スコープポリシー更新 (管理者)
 // (PATCH /scope/policy)
-func (*Handler) UpdateScopePolicy(ctx echo.Context) error {
-	return nil
+func (h *Handler) UpdateScopePolicy(ctx echo.Context) error {
+	var req gen.ScopePolicyUpdateRequest
+	if err := ctx.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid body")
+	}
+	now := time.Now()
+	id := uuid.NewString()
+	p := &model.ScopePolicy{
+		ID:                            id,
+		RuntimeRequiredDefaultInScope: req.RuntimeRequiredDefaultInScope != nil && *req.RuntimeRequiredDefaultInScope,
+		ServerEnvIncluded:             req.ServerEnvIncluded != nil && *req.ServerEnvIncluded,
+		AutoMarkForksInScope:          req.AutoMarkForksInScope != nil && *req.AutoMarkForksInScope,
+		UpdatedAt:                     now,
+		UpdatedBy:                     "api-user",
+	}
+	if err := h.ScopePolicyRepo.Update(ctx.Request().Context(), p); err != nil {
+		return err
+	}
+	uid2 := uuid.MustParse(p.ID)
+	res := gen.ScopePolicy{
+		Id:                            &uid2,
+		RuntimeRequiredDefaultInScope: &p.RuntimeRequiredDefaultInScope,
+		ServerEnvIncluded:             &p.ServerEnvIncluded,
+		AutoMarkForksInScope:          &p.AutoMarkForksInScope,
+		UpdatedAt:                     &p.UpdatedAt,
+		UpdatedBy:                     &p.UpdatedBy,
+	}
+	return ctx.JSON(http.StatusOK, res)
 }
 
 // タグ一覧
