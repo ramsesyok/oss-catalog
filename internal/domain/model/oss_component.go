@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-// OssComponent represents OSS component entity.
+// OssComponent は OSS コンポーネントを表すドメインモデル。
 type OssComponent struct {
 	ID               string
 	Name             string
@@ -19,7 +19,7 @@ type OssComponent struct {
 	Tags             []Tag
 }
 
-// Tag represents a classification tag.
+// Tag はコンポーネントに付与される分類タグ。
 type Tag struct {
 	ID        string
 	Name      string

@@ -6,10 +6,10 @@ import (
 	"github.com/ramsesyok/oss-catalog/internal/domain/model"
 )
 
-// OssComponentTagRepository defines operations on oss_component_tags table.
+// OssComponentTagRepository は oss_component_tags テーブル操作を定義する。
 type OssComponentTagRepository interface {
-	// ListByOssID returns tags associated with a component ordered by created_at.
+	// ListByOssID は指定コンポーネントに紐づくタグを作成日時降順で取得する。
 	ListByOssID(ctx context.Context, ossID string) ([]model.Tag, error)
-	// Replace replaces tags for a component with given tagIDs.
+	// Replace はタグを指定 ID 群で置き換える。
 	Replace(ctx context.Context, ossID string, tagIDs []string) error
 }

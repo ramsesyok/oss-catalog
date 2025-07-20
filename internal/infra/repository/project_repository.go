@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 
 	"github.com/ramsesyok/oss-catalog/internal/domain/model"
 	domrepo "github.com/ramsesyok/oss-catalog/internal/domain/repository"
@@ -29,10 +28,7 @@ func (r *ProjectRepository) Search(ctx context.Context, f domrepo.ProjectFilter)
 		wheres = append(wheres, "name LIKE ?")
 		args = append(args, "%"+f.Name+"%")
 	}
-	whereSQL := ""
-	if len(wheres) > 0 {
-		whereSQL = "WHERE " + strings.Join(wheres, " AND ")
-	}
+	whereSQL := whereClause(wheres)
 
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM projects %s", whereSQL)
 	row := r.DB.QueryRowContext(ctx, countQuery, args...)
@@ -59,18 +55,10 @@ func (r *ProjectRepository) Search(ctx context.Context, f domrepo.ProjectFilter)
 		if err := rows.Scan(&p.ID, &p.ProjectCode, &p.Name, &dept, &mgr, &delivery, &desc, &p.CreatedAt, &p.UpdatedAt, &usageCount); err != nil {
 			return nil, 0, err
 		}
-		if dept.Valid {
-			p.Department = &dept.String
-		}
-		if mgr.Valid {
-			p.Manager = &mgr.String
-		}
-		if delivery.Valid {
-			p.DeliveryDate = &delivery.Time
-		}
-		if desc.Valid {
-			p.Description = &desc.String
-		}
+		p.Department = strPtr(dept)
+		p.Manager = strPtr(mgr)
+		p.DeliveryDate = timePtr(delivery)
+		p.Description = strPtr(desc)
 		p.OssUsageCount = usageCount
 		projects = append(projects, p)
 	}
@@ -87,18 +75,10 @@ func (r *ProjectRepository) Get(ctx context.Context, id string) (*model.Project,
 	if err := row.Scan(&p.ID, &p.ProjectCode, &p.Name, &dept, &mgr, &delivery, &desc, &p.CreatedAt, &p.UpdatedAt, &usageCount); err != nil {
 		return nil, err
 	}
-	if dept.Valid {
-		p.Department = &dept.String
-	}
-	if mgr.Valid {
-		p.Manager = &mgr.String
-	}
-	if delivery.Valid {
-		p.DeliveryDate = &delivery.Time
-	}
-	if desc.Valid {
-		p.Description = &desc.String
-	}
+	p.Department = strPtr(dept)
+	p.Manager = strPtr(mgr)
+	p.DeliveryDate = timePtr(delivery)
+	p.Description = strPtr(desc)
 	p.OssUsageCount = usageCount
 	return &p, nil
 }

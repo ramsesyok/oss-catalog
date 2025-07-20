@@ -6,12 +6,12 @@ import (
 	"github.com/ramsesyok/oss-catalog/internal/domain/model"
 )
 
-// TagRepository defines DB operations for Tag.
+// TagRepository はタグの永続化処理を定義する。
 type TagRepository interface {
-	// List returns all tags ordered by creation date descending.
+	// List は全てのタグを作成日時降順で返す。
 	List(ctx context.Context) ([]model.Tag, error)
-	// Create inserts a new tag record.
+	// Create は新しいタグを登録する。
 	Create(ctx context.Context, t *model.Tag) error
-	// Delete removes a tag by ID.
+	// Delete は指定 ID のタグを削除する。
 	Delete(ctx context.Context, id string) error
 }

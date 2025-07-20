@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-// OssVersion represents a version of an OSS component.
+// OssVersion は OSS コンポーネントのバージョン情報を表す。
 type OssVersion struct {
 	ID                      string
 	OssID                   string

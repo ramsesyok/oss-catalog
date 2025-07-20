@@ -7,7 +7,7 @@ import (
 	"github.com/ramsesyok/oss-catalog/internal/domain/model"
 )
 
-// AuditLogFilter filters audit log search.
+// AuditLogFilter は監査ログ検索の条件を表す。
 type AuditLogFilter struct {
 	EntityType *string
 	EntityID   *string
@@ -15,7 +15,7 @@ type AuditLogFilter struct {
 	To         *time.Time
 }
 
-// AuditLogRepository defines DB operations for AuditLog.
+// AuditLogRepository は監査ログの永続化処理を定義する。
 type AuditLogRepository interface {
 	Search(ctx context.Context, f AuditLogFilter) ([]model.AuditLog, error)
 	Create(ctx context.Context, l *model.AuditLog) error

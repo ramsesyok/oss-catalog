@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-// AuditLog represents a single audit event.
+// AuditLog は監査ログの 1 レコードを表す。
 type AuditLog struct {
 	ID         string
 	EntityType string

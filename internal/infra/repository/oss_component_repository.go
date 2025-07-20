@@ -35,10 +35,7 @@ func (r *OssComponentRepository) Search(ctx context.Context, f domrepo.OssCompon
 		wheres = append(wheres, "EXISTS (SELECT 1 FROM oss_component_tags t JOIN tags tg ON t.tag_id = tg.id WHERE t.oss_id = oc.id AND tg.name = ?)")
 		args = append(args, f.Tag)
 	}
-	whereSQL := ""
-	if len(wheres) > 0 {
-		whereSQL = "WHERE " + strings.Join(wheres, " AND ")
-	}
+	whereSQL := whereClause(wheres)
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM oss_components oc %s", whereSQL)
 	row := r.DB.QueryRowContext(ctx, countQuery, args...)
 	var total int
