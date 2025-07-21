@@ -13,6 +13,7 @@ type Handler struct {
 	OssComponentRepo      domrepo.OssComponentRepository
 	OssComponentLayerRepo domrepo.OssComponentLayerRepository
 	OssComponentTagRepo   domrepo.OssComponentTagRepository
+	TagRepo               domrepo.TagRepository
 	OssVersionRepo        domrepo.OssVersionRepository
 	ProjectRepo           domrepo.ProjectRepository
 	ProjectUsageRepo      domrepo.ProjectUsageRepository
