@@ -15,6 +15,18 @@ import (
 	"github.com/ramsesyok/oss-catalog/internal/domain/model"
 )
 
+func toScopePolicy(m model.ScopePolicy) gen.ScopePolicy {
+	uid := uuid.MustParse(m.ID)
+	return gen.ScopePolicy{
+		Id:                            &uid,
+		RuntimeRequiredDefaultInScope: &m.RuntimeRequiredDefaultInScope,
+		ServerEnvIncluded:             &m.ServerEnvIncluded,
+		AutoMarkForksInScope:          &m.AutoMarkForksInScope,
+		UpdatedAt:                     &m.UpdatedAt,
+		UpdatedBy:                     &m.UpdatedBy,
+	}
+}
+
 // 現行スコープポリシー取得
 // (GET /scope/policy)
 func (h *Handler) GetScopePolicy(ctx echo.Context) error {
@@ -25,15 +37,7 @@ func (h *Handler) GetScopePolicy(ctx echo.Context) error {
 		}
 		return err
 	}
-	uid := uuid.MustParse(p.ID)
-	res := gen.ScopePolicy{
-		Id:                            &uid,
-		RuntimeRequiredDefaultInScope: &p.RuntimeRequiredDefaultInScope,
-		ServerEnvIncluded:             &p.ServerEnvIncluded,
-		AutoMarkForksInScope:          &p.AutoMarkForksInScope,
-		UpdatedAt:                     &p.UpdatedAt,
-		UpdatedBy:                     &p.UpdatedBy,
-	}
+	res := toScopePolicy(*p)
 	return ctx.JSON(http.StatusOK, res)
 }
 
@@ -44,27 +48,35 @@ func (h *Handler) UpdateScopePolicy(ctx echo.Context) error {
 	if err := ctx.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid body")
 	}
-	now := time.Now()
-	id := uuid.NewString()
-	p := &model.ScopePolicy{
-		ID:                            id,
-		RuntimeRequiredDefaultInScope: req.RuntimeRequiredDefaultInScope != nil && *req.RuntimeRequiredDefaultInScope,
-		ServerEnvIncluded:             req.ServerEnvIncluded != nil && *req.ServerEnvIncluded,
-		AutoMarkForksInScope:          req.AutoMarkForksInScope != nil && *req.AutoMarkForksInScope,
-		UpdatedAt:                     now,
-		UpdatedBy:                     "api-user",
-	}
-	if err := h.ScopePolicyRepo.Update(ctx.Request().Context(), p); err != nil {
+	ctxx := ctx.Request().Context()
+	existing, err := h.ScopePolicyRepo.Get(ctxx)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	}
-	uid2 := uuid.MustParse(p.ID)
-	res := gen.ScopePolicy{
-		Id:                            &uid2,
-		RuntimeRequiredDefaultInScope: &p.RuntimeRequiredDefaultInScope,
-		ServerEnvIncluded:             &p.ServerEnvIncluded,
-		AutoMarkForksInScope:          &p.AutoMarkForksInScope,
-		UpdatedAt:                     &p.UpdatedAt,
-		UpdatedBy:                     &p.UpdatedBy,
+
+	now := time.Now()
+	var p *model.ScopePolicy
+	if existing != nil {
+		p = existing
+	} else {
+		p = &model.ScopePolicy{ID: uuid.NewString()}
 	}
+
+	if req.RuntimeRequiredDefaultInScope != nil {
+		p.RuntimeRequiredDefaultInScope = *req.RuntimeRequiredDefaultInScope
+	}
+	if req.ServerEnvIncluded != nil {
+		p.ServerEnvIncluded = *req.ServerEnvIncluded
+	}
+	if req.AutoMarkForksInScope != nil {
+		p.AutoMarkForksInScope = *req.AutoMarkForksInScope
+	}
+	p.UpdatedAt = now
+	p.UpdatedBy = "api-user"
+
+	if err := h.ScopePolicyRepo.Update(ctxx, p); err != nil {
+		return err
+	}
+	res := toScopePolicy(*p)
 	return ctx.JSON(http.StatusOK, res)
 }
