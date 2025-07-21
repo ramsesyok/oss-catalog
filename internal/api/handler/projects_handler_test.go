@@ -140,6 +140,47 @@ func TestDeleteProject(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestListProjects_Error(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &infrarepo.ProjectRepository{DB: db}
+	h := &Handler{ProjectRepo: repo}
+	e := setupEcho(h)
+
+	query := regexp.QuoteMeta("SELECT COUNT(*) FROM projects WHERE project_code LIKE ?")
+	mock.ExpectQuery(query).WithArgs("%P%").WillReturnError(sql.ErrConnDone)
+
+	req := httptest.NewRequest(http.MethodGet, "/projects?code=P", nil)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusInternalServerError, rec.Code)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestCreateProject_InvalidBody(t *testing.T) {
+	h := &Handler{}
+	e := setupEcho(h)
+	req := httptest.NewRequest(http.MethodPost, "/projects", strings.NewReader("{"))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+func TestUpdateProject_InvalidBody(t *testing.T) {
+	h := &Handler{}
+	e := setupEcho(h)
+	pid := uuid.NewString()
+	req := httptest.NewRequest(http.MethodPatch, "/projects/"+pid, strings.NewReader("{"))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
 func TestUpdateProject(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
@@ -221,6 +262,17 @@ func TestCreateProjectUsage(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestCreateProjectUsage_InvalidBody(t *testing.T) {
+	h := &Handler{}
+	e := setupEcho(h)
+	pid := uuid.NewString()
+	req := httptest.NewRequest(http.MethodPost, "/projects/"+pid+"/usages", strings.NewReader("{"))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
 func TestUpdateProjectUsageScope(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
@@ -243,6 +295,18 @@ func TestUpdateProjectUsageScope(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, rec.Code)
 	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestUpdateProjectUsageScope_InvalidBody(t *testing.T) {
+	h := &Handler{}
+	e := setupEcho(h)
+	pid := uuid.NewString()
+	uid := uuid.NewString()
+	req := httptest.NewRequest(http.MethodPatch, "/projects/"+pid+"/usages/"+uid+"/scope", strings.NewReader("{"))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
 }
 
 func TestUpdateProjectUsage(t *testing.T) {
@@ -269,6 +333,18 @@ func TestUpdateProjectUsage(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestUpdateProjectUsage_InvalidBody(t *testing.T) {
+	h := &Handler{}
+	e := setupEcho(h)
+	pid := uuid.NewString()
+	uid := uuid.NewString()
+	req := httptest.NewRequest(http.MethodPatch, "/projects/"+pid+"/usages/"+uid, strings.NewReader("{"))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
 func TestDeleteProjectUsage(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
@@ -288,6 +364,28 @@ func TestDeleteProjectUsage(t *testing.T) {
 	e.ServeHTTP(rec, req)
 
 	require.Equal(t, http.StatusNoContent, rec.Code)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestDeleteProjectUsage_Error(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	usageRepo := &infrarepo.ProjectUsageRepository{DB: db}
+	h := &Handler{ProjectUsageRepo: usageRepo}
+	e := setupEcho(h)
+
+	pid := uuid.NewString()
+	uid := uuid.NewString()
+	query := regexp.QuoteMeta("DELETE FROM project_usages WHERE id = ?")
+	mock.ExpectExec(query).WithArgs(uid).WillReturnError(sql.ErrConnDone)
+
+	req := httptest.NewRequest(http.MethodDelete, "/projects/"+pid+"/usages/"+uid, nil)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusInternalServerError, rec.Code)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
