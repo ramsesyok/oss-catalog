@@ -8,6 +8,10 @@ import (
 )
 
 type Handler struct {
-	AuditRepo       domrepo.AuditLogRepository
-	ScopePolicyRepo domrepo.ScopePolicyRepository
+	AuditRepo             domrepo.AuditLogRepository
+	ScopePolicyRepo       domrepo.ScopePolicyRepository
+	OssComponentRepo      domrepo.OssComponentRepository
+	OssComponentLayerRepo domrepo.OssComponentLayerRepository
+	OssComponentTagRepo   domrepo.OssComponentTagRepository
+	OssVersionRepo        domrepo.OssVersionRepository
 }
