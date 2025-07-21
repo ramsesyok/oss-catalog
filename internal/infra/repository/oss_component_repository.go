@@ -10,12 +10,12 @@ import (
 	domrepo "github.com/ramsesyok/oss-catalog/internal/domain/repository"
 )
 
-// OssComponentRepository implements domrepo.OssComponentRepository.
+// OssComponentRepository は domrepo.OssComponentRepository の実装。
 type OssComponentRepository struct {
 	DB *sql.DB
 }
 
-// Search returns oss components matching filter.
+// Search はフィルタに合致する OSS コンポーネント一覧を返す。
 func (r *OssComponentRepository) Search(ctx context.Context, f domrepo.OssComponentFilter) ([]model.OssComponent, int, error) {
 	var args []any
 	var wheres []string
@@ -64,7 +64,7 @@ func (r *OssComponentRepository) Search(ctx context.Context, f domrepo.OssCompon
 	return comps, total, rows.Err()
 }
 
-// Create inserts a new oss component.
+// Create は新しい OSS コンポーネントを登録する。
 func (r *OssComponentRepository) Create(ctx context.Context, c *model.OssComponent) error {
 	query := `INSERT INTO oss_components (id, name, normalized_name, homepage_url, repository_url, description, primary_language, default_usage_role, deprecated, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	_, err := r.DB.ExecContext(ctx, query, c.ID, c.Name, c.NormalizedName, c.HomepageURL, c.RepositoryURL, c.Description, c.PrimaryLanguage, c.DefaultUsageRole, c.Deprecated, c.CreatedAt, c.UpdatedAt)

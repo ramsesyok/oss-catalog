@@ -233,7 +233,7 @@ func (h *Handler) UpdateProject(ctx echo.Context, projectId openapi_types.UUID) 
 // プロジェクト納品用エクスポート (プレーホルダ)
 // (GET /projects/{projectId}/export)
 func (*Handler) ExportProjectArtifacts(ctx echo.Context, projectId openapi_types.UUID, params gen.ExportProjectArtifactsParams) error {
-	// placeholder implementation
+	// 一時的な実装
 	return ctx.JSON(http.StatusOK, map[string]any{"placeholder": "todo"})
 }
 
@@ -373,6 +373,6 @@ func (h *Handler) UpdateProjectUsageScope(ctx echo.Context, projectId openapi_ty
 		EvaluatedAt:   &now,
 		EvaluatedBy:   &evaluatedBy,
 	}
-	_ = u // placeholder until full implementation
+	_ = u // 実装完了までのプレースホルダ
 	return ctx.JSON(http.StatusOK, map[string]any{})
 }

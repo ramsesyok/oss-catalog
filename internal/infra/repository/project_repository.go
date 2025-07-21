@@ -9,14 +9,14 @@ import (
 	domrepo "github.com/ramsesyok/oss-catalog/internal/domain/repository"
 )
 
-// ProjectRepository implements domrepo.ProjectRepository.
+// ProjectRepository は domrepo.ProjectRepository の実装。
 type ProjectRepository struct {
 	DB *sql.DB
 }
 
 var _ domrepo.ProjectRepository = (*ProjectRepository)(nil)
 
-// Search returns projects matching filter with usage counts.
+// Search は条件に合致するプロジェクト一覧を利用数付きで返す。
 func (r *ProjectRepository) Search(ctx context.Context, f domrepo.ProjectFilter) ([]model.Project, int, error) {
 	var args []any
 	var wheres []string
@@ -65,7 +65,7 @@ func (r *ProjectRepository) Search(ctx context.Context, f domrepo.ProjectFilter)
 	return projects, total, rows.Err()
 }
 
-// Get returns a project by ID.
+// Get は ID を指定してプロジェクトを取得する。
 func (r *ProjectRepository) Get(ctx context.Context, id string) (*model.Project, error) {
 	row := r.DB.QueryRowContext(ctx, `SELECT id, project_code, name, department, manager, delivery_date, description, created_at, updated_at, (SELECT COUNT(*) FROM project_usages u WHERE u.project_id = projects.id) FROM projects WHERE id = ?`, id)
 	var p model.Project
@@ -83,19 +83,19 @@ func (r *ProjectRepository) Get(ctx context.Context, id string) (*model.Project,
 	return &p, nil
 }
 
-// Create inserts a new project.
+// Create は新しいプロジェクトを登録する。
 func (r *ProjectRepository) Create(ctx context.Context, p *model.Project) error {
 	_, err := r.DB.ExecContext(ctx, `INSERT INTO projects (id, project_code, name, department, manager, delivery_date, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, p.ID, p.ProjectCode, p.Name, p.Department, p.Manager, p.DeliveryDate, p.Description, p.CreatedAt, p.UpdatedAt)
 	return err
 }
 
-// Update updates an existing project.
+// Update は既存プロジェクトを更新する。
 func (r *ProjectRepository) Update(ctx context.Context, p *model.Project) error {
 	_, err := r.DB.ExecContext(ctx, `UPDATE projects SET name = ?, department = ?, manager = ?, delivery_date = ?, description = ?, updated_at = ? WHERE id = ?`, p.Name, p.Department, p.Manager, p.DeliveryDate, p.Description, p.UpdatedAt, p.ID)
 	return err
 }
 
-// Delete removes a project by ID.
+// Delete は ID 指定でプロジェクトを削除する。
 func (r *ProjectRepository) Delete(ctx context.Context, id string) error {
 	_, err := r.DB.ExecContext(ctx, `DELETE FROM projects WHERE id = ?`, id)
 	return err

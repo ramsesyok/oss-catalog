@@ -1,7 +1,7 @@
 package handler
 
-// hanlder.go - ハンドラ系の共通部分
-// (エンドポイント定義無し)
+// handler.go - ハンドラ共通構造体
+// (エンドポイント定義はなし)
 
 import (
 	domrepo "github.com/ramsesyok/oss-catalog/internal/domain/repository"

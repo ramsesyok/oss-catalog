@@ -10,14 +10,14 @@ import (
 	domrepo "github.com/ramsesyok/oss-catalog/internal/domain/repository"
 )
 
-// ProjectUsageRepository implements domrepo.ProjectUsageRepository.
+// ProjectUsageRepository は domrepo.ProjectUsageRepository の実装。
 type ProjectUsageRepository struct {
 	DB *sql.DB
 }
 
 var _ domrepo.ProjectUsageRepository = (*ProjectUsageRepository)(nil)
 
-// Search returns project usages matching filter.
+// Search は条件に合致する ProjectUsage を取得する。
 func (r *ProjectUsageRepository) Search(ctx context.Context, f domrepo.ProjectUsageFilter) ([]model.ProjectUsage, int, error) {
 	var args []any
 	wheres := []string{"project_id = ?"}
@@ -68,27 +68,27 @@ func (r *ProjectUsageRepository) Search(ctx context.Context, f domrepo.ProjectUs
 	return usages, total, rows.Err()
 }
 
-// Create inserts a new project usage.
+// Create は新しい利用情報を登録する。
 func (r *ProjectUsageRepository) Create(ctx context.Context, u *model.ProjectUsage) error {
 	query := `INSERT INTO project_usages (id, project_id, oss_id, oss_version_id, usage_role, scope_status, inclusion_note, direct_dependency, added_at, evaluated_at, evaluated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	_, err := r.DB.ExecContext(ctx, query, u.ID, u.ProjectID, u.OssID, u.OssVersionID, u.UsageRole, u.ScopeStatus, u.InclusionNote, u.DirectDependency, u.AddedAt, u.EvaluatedAt, u.EvaluatedBy)
 	return err
 }
 
-// Update updates an existing usage.
+// Update は既存の利用情報を更新する。
 func (r *ProjectUsageRepository) Update(ctx context.Context, u *model.ProjectUsage) error {
 	query := `UPDATE project_usages SET oss_version_id = ?, usage_role = ?, direct_dependency = ?, inclusion_note = ?, scope_status = ?, evaluated_at = ?, evaluated_by = ? WHERE id = ?`
 	_, err := r.DB.ExecContext(ctx, query, u.OssVersionID, u.UsageRole, u.DirectDependency, u.InclusionNote, u.ScopeStatus, u.EvaluatedAt, u.EvaluatedBy, u.ID)
 	return err
 }
 
-// Delete removes a usage by ID.
+// Delete は ID を指定して利用情報を削除する。
 func (r *ProjectUsageRepository) Delete(ctx context.Context, id string) error {
 	_, err := r.DB.ExecContext(ctx, `DELETE FROM project_usages WHERE id = ?`, id)
 	return err
 }
 
-// UpdateScope updates only scope related fields.
+// UpdateScope はスコープ関連のフィールドのみ更新する。
 func (r *ProjectUsageRepository) UpdateScope(ctx context.Context, id string, scopeStatus string, inclusionNote *string, evaluatedAt time.Time, evaluatedBy *string) error {
 	query := `UPDATE project_usages SET scope_status = ?, inclusion_note = ?, evaluated_at = ?, evaluated_by = ? WHERE id = ?`
 	_, err := r.DB.ExecContext(ctx, query, scopeStatus, inclusionNote, evaluatedAt, evaluatedBy, id)

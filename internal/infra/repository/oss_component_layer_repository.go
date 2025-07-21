@@ -7,14 +7,14 @@ import (
 	domrepo "github.com/ramsesyok/oss-catalog/internal/domain/repository"
 )
 
-// OssComponentLayerRepository implements domrepo.OssComponentLayerRepository.
+// OssComponentLayerRepository は domrepo.OssComponentLayerRepository の実装。
 type OssComponentLayerRepository struct {
 	DB *sql.DB
 }
 
 var _ domrepo.OssComponentLayerRepository = (*OssComponentLayerRepository)(nil)
 
-// ListByOssID returns layers associated with the given component ordered by layer name.
+// ListByOssID は指定されたコンポーネントのレイヤーを名前順で取得する。
 func (r *OssComponentLayerRepository) ListByOssID(ctx context.Context, ossID string) ([]string, error) {
 	rows, err := r.DB.QueryContext(ctx,
 		`SELECT layer FROM oss_component_layers WHERE oss_id = ? ORDER BY layer`,
@@ -36,7 +36,7 @@ func (r *OssComponentLayerRepository) ListByOssID(ctx context.Context, ossID str
 	return layers, rows.Err()
 }
 
-// Replace replaces layers for a component with the given layers.
+// Replace は指定コンポーネントのレイヤーを与えられた値で置き換える。
 func (r *OssComponentLayerRepository) Replace(ctx context.Context, ossID string, layers []string) error {
 	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
