@@ -17,4 +17,4 @@ type ProjectUsage struct {
 	EvaluatedBy      *string
 }
 
-// ProjectUsageFilter not defined here - in repository package.
+// ProjectUsageFilter は repository パッケージで定義される。

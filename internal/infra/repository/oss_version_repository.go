@@ -11,14 +11,14 @@ import (
 	domrepo "github.com/ramsesyok/oss-catalog/internal/domain/repository"
 )
 
-// OssVersionRepository implements domrepo.OssVersionRepository.
+// OssVersionRepository は domrepo.OssVersionRepository の実装。
 type OssVersionRepository struct {
 	DB *sql.DB
 }
 
 var _ domrepo.OssVersionRepository = (*OssVersionRepository)(nil)
 
-// Search returns versions for an OSS component.
+// Search は指定された OSS コンポーネントのバージョン一覧を返す。
 func (r *OssVersionRepository) Search(ctx context.Context, f domrepo.OssVersionFilter) ([]model.OssVersion, int, error) {
 	var args []any
 	wheres := []string{"oss_id = ?"}
@@ -75,7 +75,7 @@ func (r *OssVersionRepository) Search(ctx context.Context, f domrepo.OssVersionF
 	return versions, total, rows.Err()
 }
 
-// Get returns a version by ID.
+// Get は ID でバージョンを取得する。
 func (r *OssVersionRepository) Get(ctx context.Context, id string) (*model.OssVersion, error) {
 	row := r.DB.QueryRowContext(ctx, `SELECT id, oss_id, version, release_date, license_expression_raw, license_concluded, purl, cpe_list, hash_sha256, modified, modification_description, review_status, last_reviewed_at, scope_status, supplier_type, fork_origin_url, created_at, updated_at FROM oss_versions WHERE id = ?`, id)
 	var v model.OssVersion
@@ -100,7 +100,7 @@ func (r *OssVersionRepository) Get(ctx context.Context, id string) (*model.OssVe
 	return &v, nil
 }
 
-// Create inserts a new version.
+// Create は新しいバージョンを登録する。
 func (r *OssVersionRepository) Create(ctx context.Context, v *model.OssVersion) error {
 	_, err := r.DB.ExecContext(ctx,
 		`INSERT INTO oss_versions (id, oss_id, version, release_date, license_expression_raw, license_concluded, purl, cpe_list, hash_sha256, modified, modification_description, review_status, last_reviewed_at, scope_status, supplier_type, fork_origin_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -109,7 +109,7 @@ func (r *OssVersionRepository) Create(ctx context.Context, v *model.OssVersion) 
 	return err
 }
 
-// Update updates an existing version.
+// Update は既存バージョンを更新する。
 func (r *OssVersionRepository) Update(ctx context.Context, v *model.OssVersion) error {
 	_, err := r.DB.ExecContext(ctx,
 		`UPDATE oss_versions SET release_date = ?, license_expression_raw = ?, license_concluded = ?, purl = ?, cpe_list = ?, hash_sha256 = ?, modified = ?, modification_description = ?, review_status = ?, last_reviewed_at = ?, scope_status = ?, supplier_type = ?, fork_origin_url = ?, updated_at = ? WHERE id = ?`,
@@ -118,7 +118,7 @@ func (r *OssVersionRepository) Update(ctx context.Context, v *model.OssVersion) 
 	return err
 }
 
-// Delete removes a version by ID.
+// Delete は ID 指定でバージョンを削除する。
 func (r *OssVersionRepository) Delete(ctx context.Context, id string) error {
 	_, err := r.DB.ExecContext(ctx, `DELETE FROM oss_versions WHERE id = ?`, id)
 	return err

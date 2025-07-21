@@ -9,14 +9,14 @@ import (
 	domrepo "github.com/ramsesyok/oss-catalog/internal/domain/repository"
 )
 
-// AuditLogRepository implements domrepo.AuditLogRepository.
+// AuditLogRepository は domrepo.AuditLogRepository の実装。
 type AuditLogRepository struct {
 	DB *sql.DB
 }
 
 var _ domrepo.AuditLogRepository = (*AuditLogRepository)(nil)
 
-// Search returns audit logs matching filter ordered by created_at desc.
+// Search は条件に合致する監査ログを作成日時の降順で取得する。
 func (r *AuditLogRepository) Search(ctx context.Context, f domrepo.AuditLogFilter) ([]model.AuditLog, error) {
 	var args []any
 	var wheres []string
@@ -57,7 +57,7 @@ func (r *AuditLogRepository) Search(ctx context.Context, f domrepo.AuditLogFilte
 	return logs, rows.Err()
 }
 
-// Create inserts a new audit log entry.
+// Create は新しい監査ログを登録する。
 func (r *AuditLogRepository) Create(ctx context.Context, l *model.AuditLog) error {
 	_, err := r.DB.ExecContext(ctx,
 		`INSERT INTO audit_logs (id, entity_type, entity_id, action, user_name, summary, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,

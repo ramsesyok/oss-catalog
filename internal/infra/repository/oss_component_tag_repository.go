@@ -9,14 +9,14 @@ import (
 	domrepo "github.com/ramsesyok/oss-catalog/internal/domain/repository"
 )
 
-// OssComponentTagRepository implements domrepo.OssComponentTagRepository.
+// OssComponentTagRepository は domrepo.OssComponentTagRepository の実装。
 type OssComponentTagRepository struct {
 	DB *sql.DB
 }
 
 var _ domrepo.OssComponentTagRepository = (*OssComponentTagRepository)(nil)
 
-// ListByOssID returns tags associated with the given component ordered by created_at.
+// ListByOssID は指定されたコンポーネントに紐づくタグを作成日時降順で取得する。
 func (r *OssComponentTagRepository) ListByOssID(ctx context.Context, ossID string) ([]model.Tag, error) {
 	rows, err := r.DB.QueryContext(ctx,
 		`SELECT tg.id, tg.name, tg.created_at FROM tags tg
@@ -40,7 +40,7 @@ func (r *OssComponentTagRepository) ListByOssID(ctx context.Context, ossID strin
 	return tags, rows.Err()
 }
 
-// Replace replaces tags for a component with provided IDs.
+// Replace は指定コンポーネントのタグを指定IDで置き換える。
 func (r *OssComponentTagRepository) Replace(ctx context.Context, ossID string, tagIDs []string) error {
 	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
