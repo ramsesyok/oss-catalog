@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -111,4 +112,86 @@ func TestGetOssVersion_OK(t *testing.T) {
 	var res gen.OssVersion
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &res))
 	require.Equal(t, vid, res.Id)
+}
+
+func TestListOssComponents_Error(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	compRepo := &infrarepo.OssComponentRepository{DB: db}
+	h := &Handler{OssComponentRepo: compRepo}
+	e := setupEcho(h)
+
+	countQuery := regexp.QuoteMeta("SELECT COUNT(*) FROM oss_components oc")
+	mock.ExpectQuery(countQuery).WillReturnError(sql.ErrConnDone)
+
+	req := httptest.NewRequest(http.MethodGet, "/oss", nil)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusInternalServerError, rec.Code)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestCreateOssComponent_InvalidBody(t *testing.T) {
+	h := &Handler{}
+	e := setupEcho(h)
+	req := httptest.NewRequest(http.MethodPost, "/oss", strings.NewReader("{"))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+func TestListOssVersions_Error(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &infrarepo.OssVersionRepository{DB: db}
+	h := &Handler{OssVersionRepo: repo}
+	e := setupEcho(h)
+
+	ossID := uuid.NewString()
+	countQuery := regexp.QuoteMeta("SELECT COUNT(*) FROM oss_versions WHERE oss_id = ?")
+	mock.ExpectQuery(countQuery).WithArgs(ossID).WillReturnError(sql.ErrConnDone)
+
+	req := httptest.NewRequest(http.MethodGet, "/oss/"+ossID+"/versions", nil)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusInternalServerError, rec.Code)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestDeleteOssVersion_Error(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &infrarepo.OssVersionRepository{DB: db}
+	h := &Handler{OssVersionRepo: repo}
+	e := setupEcho(h)
+
+	vid := uuid.NewString()
+	query := regexp.QuoteMeta("DELETE FROM oss_versions WHERE id = ?")
+	mock.ExpectExec(query).WithArgs(vid).WillReturnError(sql.ErrConnDone)
+
+	req := httptest.NewRequest(http.MethodDelete, "/oss/"+uuid.NewString()+"/versions/"+vid, nil)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusInternalServerError, rec.Code)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestUpdateOssVersion_InvalidBody(t *testing.T) {
+	h := &Handler{}
+	e := setupEcho(h)
+	req := httptest.NewRequest(http.MethodPatch, "/oss/"+uuid.NewString()+"/versions/"+uuid.NewString(), strings.NewReader("{"))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusBadRequest, rec.Code)
 }
