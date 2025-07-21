@@ -307,6 +307,9 @@ func TestInitialScopeStatus(t *testing.T) {
 	require.Equal(t, string(gen.INSCOPE), initialScopeStatus(policy, "RUNTIME_REQUIRED"))
 	require.Equal(t, string(gen.OUTSCOPE), initialScopeStatus(policy, "BUILD_ONLY"))
 	require.Equal(t, string(gen.OUTSCOPE), initialScopeStatus(policy, "SERVER_ENV"))
+
+	// nil policy should result in REVIEW_NEEDED for runtime role
+	require.Equal(t, string(gen.REVIEWNEEDED), initialScopeStatus(nil, "RUNTIME_REQUIRED"))
 }
 
 func TestToProjectUsage(t *testing.T) {
@@ -315,4 +318,14 @@ func TestToProjectUsage(t *testing.T) {
 	res := toProjectUsage(u)
 	require.Equal(t, u.ID, res.Id.String())
 	require.Equal(t, u.ProjectID, res.ProjectId.String())
+}
+
+func TestToProject(t *testing.T) {
+	now := time.Now()
+	desc := "desc"
+	p := model.Project{ID: uuid.NewString(), ProjectCode: "P1", Name: "Proj", Description: &desc, CreatedAt: now, UpdatedAt: now}
+	res := toProject(p)
+	require.Equal(t, p.ID, res.Id.String())
+	require.Equal(t, p.ProjectCode, res.ProjectCode)
+	require.NotNil(t, res.Description)
 }
