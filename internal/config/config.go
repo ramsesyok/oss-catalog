@@ -12,14 +12,15 @@ type Config struct {
 
 // ServerConfig holds HTTP server related settings.
 type ServerConfig struct {
-	Host string `yaml:"host"`
-	Port string `yaml:"port"`
+	Host           string   `yaml:"host"`
+	Port           string   `yaml:"port"`
+	AllowedOrigins []string `yaml:"allowed_origins"`
 }
 
 // Load reads the configuration from the given path. If path is empty,
 // it returns Config with default values.
 func Load(path string) (*Config, error) {
-	cfg := &Config{Server: ServerConfig{Host: "0.0.0.0", Port: "8080"}}
+	cfg := &Config{Server: ServerConfig{Host: "0.0.0.0", Port: "8080", AllowedOrigins: []string{"*"}}}
 	if path == "" {
 		return cfg, nil
 	}
@@ -35,6 +36,9 @@ func Load(path string) (*Config, error) {
 	}
 	if cfg.Server.Port == "" {
 		cfg.Server.Port = "8080"
+	}
+	if len(cfg.Server.AllowedOrigins) == 0 {
+		cfg.Server.AllowedOrigins = []string{"*"}
 	}
 	return cfg, nil
 }
