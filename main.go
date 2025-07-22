@@ -18,7 +18,7 @@ import (
 
 const serviceName = "oss-catalog"
 
-func runServer(host, port string) error {
+func runServer(host, port string, origins []string) error {
 	// OASテンプレートの読み込み
 	swagger, err := gen.GetSwagger()
 	if err != nil {
@@ -31,6 +31,9 @@ func runServer(host, port string) error {
 
 	e := echo.New()
 	e.Use(echomiddleware.Logger())
+	e.Use(echomiddleware.CORSWithConfig(echomiddleware.CORSConfig{
+		AllowOrigins: origins,
+	}))
 	// OASテンプレートで指定したスキーマによる検証を行う
 	e.Use(middleware.OapiRequestValidator(swagger))
 	gen.RegisterHandlers(e, &h)
@@ -63,14 +66,14 @@ func main() {
 
 		isSvc, err := isWindowsService()
 		if err == nil && isSvc {
-			if err := runService(serviceName, cfg.Server.Host, cfg.Server.Port); err != nil {
+			if err := runService(serviceName, cfg.Server.Host, cfg.Server.Port, cfg.Server.AllowedOrigins); err != nil {
 				log.Fatalf("service run failed: %v", err)
 			}
 			return
 		}
 	}
 
-	if err := runServer(cfg.Server.Host, cfg.Server.Port); err != nil {
+	if err := runServer(cfg.Server.Host, cfg.Server.Port, cfg.Server.AllowedOrigins); err != nil {
 		log.Fatalf("server error: %v", err)
 	}
 }
