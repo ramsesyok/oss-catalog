@@ -17,4 +17,5 @@ type Handler struct {
 	OssVersionRepo        domrepo.OssVersionRepository
 	ProjectRepo           domrepo.ProjectRepository
 	ProjectUsageRepo      domrepo.ProjectUsageRepository
+	UserRepo              domrepo.UserRepository
 }
