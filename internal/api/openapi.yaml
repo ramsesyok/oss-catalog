@@ -22,6 +22,7 @@ servers:
 
 tags:
   - name: Auth
+  - name: Users
   - name: OSS
   - name: OSS Versions
   - name: Tags
@@ -801,12 +802,102 @@ components:
         page: { type: integer, description: "現在ページ" }
         size: { type: integer, description: "ページサイズ" }
         total: { type: integer, description: "総件数" }
+
+    # ---- USER / ROLE ----
+    Role:
+      type: string
+      enum: [ADMIN, EDITOR, VIEWER]
+      description: アクセス制御ロール（ADMIN=全権, EDITOR=編集可, VIEWER=参照のみ）
+      x-enumDescriptions:
+        - 管理者。ユーザー管理/ポリシー変更/全CRUDが可能
+        - 編集者。OSS/プロジェクト/利用情報の作成・更新・削除が可能（ユーザー管理不可）
+        - 閲覧者。読み取りのみ可能
+
+    User:
+      type: object
+      description: システム利用ユーザー情報
+      properties:
+        id: { type: string, format: uuid, description: "ユーザーID" }
+        username: { type: string, description: "ログインID（ユニーク）" }
+        displayName: { type: string, description: "表示名" }
+        email:
+          {
+            type: string,
+            format: email,
+            nullable: true,
+            description: "メールアドレス",
+          }
+        roles:
+          type: array
+          description: 付与ロール一覧
+          items: { $ref: "#/components/schemas/Role" }
+        active: { type: boolean, description: "有効/無効フラグ" }
+        createdAt: { type: string, format: date-time, description: "作成日時" }
+        updatedAt: { type: string, format: date-time, description: "更新日時" }
+      required: [id, username, roles, active, createdAt, updatedAt]
+
+    UserCreateRequest:
+      type: object
+      description: ユーザー作成リクエスト
+      required: [username, roles]
+      properties:
+        username: { type: string, description: "ログインID" }
+        displayName: { type: string, description: "表示名" }
+        email:
+          {
+            type: string,
+            format: email,
+            nullable: true,
+            description: "メールアドレス",
+          }
+        password:
+          {
+            type: string,
+            description: "初期パスワード（Basic想定、将来JWTなら不要）",
+          }
+        roles:
+          type: array
+          items: { $ref: "#/components/schemas/Role" }
+          description: 付与するロール一覧
+        active: { type: boolean, default: true, description: "有効化フラグ" }
+
+    UserUpdateRequest:
+      type: object
+      description: ユーザー更新リクエスト（部分）
+      properties:
+        displayName: { type: string, description: "表示名" }
+        email:
+          {
+            type: string,
+            format: email,
+            nullable: true,
+            description: "メールアドレス",
+          }
+        password: { type: string, description: "パスワード再設定用（任意）" }
+        roles:
+          type: array
+          items: { $ref: "#/components/schemas/Role" }
+          description: 付与ロール一覧（管理者のみ変更可）
+        active: { type: boolean, description: "有効/無効切替" }
+
+    PagedResult_User:
+      type: object
+      description: ユーザー一覧ページング結果
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/User" }
+        page: { type: integer }
+        size: { type: integer }
+        total: { type: integer }
+
 paths:
   /oss:
     get:
       tags: [OSS]
       summary: OSSコンポーネント一覧取得
       operationId: listOssComponents
+      x-rolesAllowed: [VIEWER, EDITOR, ADMIN]
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/SizeParam"
@@ -837,6 +928,7 @@ paths:
       tags: [OSS]
       summary: OSSコンポーネント作成
       operationId: createOssComponent
+      x-rolesAllowed: [EDITOR, ADMIN]
       requestBody:
         required: true
         content:
@@ -855,6 +947,7 @@ paths:
       tags: [OSS]
       summary: OSSコンポーネント詳細
       operationId: getOssComponent
+      x-rolesAllowed: [VIEWER, EDITOR, ADMIN]
       parameters:
         - name: ossId
           in: path
@@ -871,6 +964,7 @@ paths:
       tags: [OSS]
       summary: OSSコンポーネント更新 (部分)
       operationId: updateOssComponent
+      x-rolesAllowed: [EDITOR, ADMIN]
       parameters:
         - name: ossId
           in: path
@@ -896,6 +990,7 @@ paths:
       tags: [OSS]
       summary: OSSコンポーネントを非推奨 (deprecated=true) に設定
       operationId: deprecateOssComponent
+      x-rolesAllowed: [EDITOR, ADMIN]
       parameters:
         - name: ossId
           in: path
@@ -910,6 +1005,7 @@ paths:
       tags: [OSS Versions]
       summary: 指定 OSS のバージョン一覧
       operationId: listOssVersions
+      x-rolesAllowed: [VIEWER, EDITOR, ADMIN]
       parameters:
         - name: ossId
           in: path
@@ -933,6 +1029,7 @@ paths:
       tags: [OSS Versions]
       summary: バージョン追加
       operationId: createOssVersion
+      x-rolesAllowed: [EDITOR, ADMIN]
       parameters:
         - name: ossId
           in: path
@@ -956,6 +1053,7 @@ paths:
       tags: [OSS Versions]
       summary: バージョン詳細
       operationId: getOssVersion
+      x-rolesAllowed: [VIEWER, EDITOR, ADMIN]
       parameters:
         - name: ossId
           in: path
@@ -980,6 +1078,7 @@ paths:
       tags: [OSS Versions]
       summary: バージョン更新
       operationId: updateOssVersion
+      x-rolesAllowed: [EDITOR, ADMIN]
       parameters:
         - name: ossId
           in: path
@@ -1009,6 +1108,7 @@ paths:
       tags: [OSS Versions]
       summary: バージョン削除 (論理/物理は実装方針による)
       operationId: deleteOssVersion
+      x-rolesAllowed: [ADMIN]
       parameters:
         - name: ossId
           in: path
@@ -1027,6 +1127,7 @@ paths:
       tags: [Tags]
       summary: タグ一覧
       operationId: listTags
+      x-rolesAllowed: [VIEWER, EDITOR, ADMIN]
       responses:
         "200":
           description: OK
@@ -1039,6 +1140,7 @@ paths:
       tags: [Tags]
       summary: タグ作成
       operationId: createTag
+      x-rolesAllowed: [EDITOR, ADMIN]
       requestBody:
         required: true
         content:
@@ -1059,6 +1161,7 @@ paths:
       tags: [Tags]
       summary: タグ削除
       operationId: deleteTag
+      x-rolesAllowed: [EDITOR, ADMIN]
       parameters:
         - name: tagId
           in: path
@@ -1072,6 +1175,7 @@ paths:
       tags: [Projects]
       summary: プロジェクト一覧
       operationId: listProjects
+      x-rolesAllowed: [VIEWER, EDITOR, ADMIN]
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/SizeParam"
@@ -1098,6 +1202,7 @@ paths:
       tags: [Projects]
       summary: プロジェクト作成
       operationId: createProject
+      x-rolesAllowed: [EDITOR, ADMIN]
       requestBody:
         required: true
         content:
@@ -1118,6 +1223,7 @@ paths:
       tags: [Projects]
       summary: プロジェクト詳細
       operationId: getProject
+      x-rolesAllowed: [VIEWER, EDITOR, ADMIN]
       parameters:
         - name: projectId
           in: path
@@ -1138,6 +1244,7 @@ paths:
       tags: [Projects]
       summary: プロジェクト更新
       operationId: updateProject
+      x-rolesAllowed: [EDITOR, ADMIN]
       parameters:
         - name: projectId
           in: path
@@ -1162,6 +1269,7 @@ paths:
       tags: [Projects]
       summary: プロジェクト削除 (論理予定)
       operationId: deleteProject
+      x-rolesAllowed: [ADMIN]
       parameters:
         - name: projectId
           in: path
@@ -1176,6 +1284,7 @@ paths:
       tags: [Project Usages]
       summary: プロジェクト中利用 OSS 一覧
       operationId: listProjectUsages
+      x-rolesAllowed: [VIEWER, EDITOR, ADMIN]
       parameters:
         - name: projectId
           in: path
@@ -1210,6 +1319,7 @@ paths:
       tags: [Project Usages]
       summary: プロジェクト利用追加
       operationId: createProjectUsage
+      x-rolesAllowed: [EDITOR, ADMIN]
       parameters:
         - name: projectId
           in: path
@@ -1236,6 +1346,7 @@ paths:
       tags: [Project Usages]
       summary: 利用情報更新
       operationId: updateProjectUsage
+      x-rolesAllowed: [EDITOR, ADMIN]
       parameters:
         - name: projectId
           in: path
@@ -1264,6 +1375,7 @@ paths:
       tags: [Project Usages]
       summary: 利用削除
       operationId: deleteProjectUsage
+      x-rolesAllowed: [EDITOR, ADMIN]
       parameters:
         - name: projectId
           in: path
@@ -1281,6 +1393,7 @@ paths:
       tags: [Project Usages]
       summary: スコープ判定更新
       operationId: updateProjectUsageScope
+      x-rolesAllowed: [EDITOR, ADMIN]
       parameters:
         - name: projectId
           in: path
@@ -1311,6 +1424,7 @@ paths:
       tags: [Scope Policy]
       summary: 現行スコープポリシー取得
       operationId: getScopePolicy
+      x-rolesAllowed: [VIEWER, EDITOR, ADMIN]
       responses:
         "200":
           {
@@ -1325,6 +1439,7 @@ paths:
       tags: [Scope Policy]
       summary: スコープポリシー更新 (管理者)
       operationId: updateScopePolicy
+      x-rolesAllowed: [ADMIN]
       requestBody:
         required: true
         content:
@@ -1341,11 +1456,130 @@ paths:
               },
           }
 
+  /users:
+    get:
+      tags: [Users]
+      summary: ユーザー一覧
+      operationId: listUsers
+      x-rolesAllowed: [ADMIN]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/SizeParam"
+        - name: username
+          in: query
+          schema: { type: string }
+          description: 部分一致検索
+        - name: role
+          in: query
+          schema: { $ref: "#/components/schemas/Role" }
+          description: ロールで絞り込み
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PagedResult_User" }
+    post:
+      tags: [Users]
+      summary: ユーザー作成
+      operationId: createUser
+      x-rolesAllowed: [ADMIN]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserCreateRequest" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+  /users/{userId}:
+    get:
+      tags: [Users]
+      summary: ユーザー詳細
+      operationId: getUser
+      x-rolesAllowed: [ADMIN]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          {
+            description: OK,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/User" } },
+              },
+          }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [Users]
+      summary: ユーザー更新
+      operationId: updateUser
+      x-rolesAllowed: [ADMIN]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserUpdateRequest" }
+      responses:
+        "200":
+          {
+            description: OK,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/User" } },
+              },
+          }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Users]
+      summary: ユーザー削除 (論理/物理は実装次第)
+      operationId: deleteUser
+      x-rolesAllowed: [ADMIN]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: No Content }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /me:
+    get:
+      tags: [Users]
+      summary: 現在ログイン中ユーザー情報取得
+      operationId: getCurrentUser
+      x-rolesAllowed: [VIEWER, EDITOR, ADMIN]
+      responses:
+        "200":
+          {
+            description: OK,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: "#/components/schemas/User" } },
+              },
+          }
+
   /audit:
     get:
       tags: [Audit]
       summary: 監査ログ簡易検索 (Phase1簡易)
       operationId: searchAuditLogs
+      x-rolesAllowed: [ADMIN]
       parameters:
         - name: entityType
           in: query
@@ -1385,6 +1619,7 @@ paths:
       tags: [Export]
       summary: プロジェクト納品用エクスポート (プレースホルダ)
       operationId: exportProjectArtifacts
+      x-rolesAllowed: [VIEWER, EDITOR, ADMIN]
       parameters:
         - name: projectId
           in: path
