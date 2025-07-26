@@ -7,6 +7,7 @@ import (
 	"net"
 	"runtime"
 
+	apirouter "github.com/ramsesyok/oss-catalog/internal/api"
 	gen "github.com/ramsesyok/oss-catalog/internal/api/gen"
 	"github.com/ramsesyok/oss-catalog/internal/api/handler"
 	"github.com/ramsesyok/oss-catalog/internal/config"
@@ -36,7 +37,7 @@ func runServer(host, port string, origins []string) error {
 	}))
 	// OASテンプレートで指定したスキーマによる検証を行う
 	e.Use(middleware.OapiRequestValidator(swagger))
-	gen.RegisterHandlers(e, &h)
+	apirouter.RegisterRoutes(e, &h)
 	return e.Start(net.JoinHostPort(host, port))
 }
 
