@@ -79,6 +79,21 @@ func (r *UserRepository) Get(ctx context.Context, id string) (*model.User, error
 	return &u, nil
 }
 
+// FindByUsername returns a user by username.
+func (r *UserRepository) FindByUsername(ctx context.Context, username string) (*model.User, error) {
+	row := r.DB.QueryRowContext(ctx, `SELECT id, username, display_name, email, password_hash, roles, active, created_at, updated_at FROM users WHERE username = ?`, username)
+	var u model.User
+	var display, email sql.NullString
+	var roles pq.StringArray
+	if err := row.Scan(&u.ID, &u.Username, &display, &email, &u.PasswordHash, &roles, &u.Active, &u.CreatedAt, &u.UpdatedAt); err != nil {
+		return nil, err
+	}
+	u.DisplayName = strPtr(display)
+	u.Email = strPtr(email)
+	u.Roles = []string(roles)
+	return &u, nil
+}
+
 // Create は新しいユーザーを登録する。
 func (r *UserRepository) Create(ctx context.Context, u *model.User) error {
 	_, err := r.DB.ExecContext(ctx,

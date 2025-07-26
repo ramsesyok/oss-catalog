@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	gen "github.com/ramsesyok/oss-catalog/internal/api/gen"
-	domrepo "github.com/ramsesyok/oss-catalog/internal/domain/repository"
+	"github.com/ramsesyok/oss-catalog/internal/domain/service"
 	"github.com/ramsesyok/oss-catalog/pkg/auth"
 	problem "github.com/ramsesyok/oss-catalog/pkg/response"
 )
@@ -19,14 +19,21 @@ func (h *Handler) Login(ctx echo.Context) error {
 	if err := ctx.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid body")
 	}
-	users, _, err := h.UserRepo.Search(ctx.Request().Context(), domrepo.UserFilter{Username: req.Username, Page: 1, Size: 1})
+
+	svc := service.AuthService{UserRepo: h.UserRepo}
+	u, err := svc.Authenticate(ctx.Request().Context(), req.Username, req.Password)
 	if err != nil {
-		return err
+		switch {
+		case errors.Is(err, service.ErrUserDisabled):
+			return problem.Forbidden(ctx, "USER_DISABLED", "user disabled")
+		case errors.Is(err, service.ErrInvalidCredential):
+			return problem.Unauthorized(ctx, "INVALID_CREDENTIAL", "invalid username or password")
+		default:
+			return err
+		}
 	}
-	if len(users) == 0 || users[0].PasswordHash != req.Password {
-		return problem.Unauthorized(ctx, "INVALID_CREDENTIAL", "invalid username or password")
-	}
-	token, exp, err := auth.GenerateToken(&users[0])
+
+	token, exp, err := auth.GenerateToken(u)
 	if err != nil {
 		return err
 	}
@@ -36,6 +43,7 @@ func (h *Handler) Login(ctx echo.Context) error {
 
 // Logout is a no-op placeholder.
 func (h *Handler) Logout(ctx echo.Context) error {
+	// TODO: write audit log of logout event
 	return ctx.NoContent(http.StatusNoContent)
 }
 
