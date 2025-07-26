@@ -8,6 +8,12 @@ import (
 // Config represents application configuration loaded from a YAML file.
 type Config struct {
 	Server ServerConfig `yaml:"server"`
+	DB     DBConfig     `yaml:"db"`
+}
+
+// DBConfig holds database connection settings.
+type DBConfig struct {
+	DSN string `yaml:"dsn"`
 }
 
 // ServerConfig holds HTTP server related settings.
@@ -20,7 +26,10 @@ type ServerConfig struct {
 // Load reads the configuration from the given path. If path is empty,
 // it returns Config with default values.
 func Load(path string) (*Config, error) {
-	cfg := &Config{Server: ServerConfig{Host: "0.0.0.0", Port: "8080", AllowedOrigins: []string{"*"}}}
+	cfg := &Config{
+		Server: ServerConfig{Host: "0.0.0.0", Port: "8080", AllowedOrigins: []string{"*"}},
+		DB:     DBConfig{DSN: "file:oss-catalog.db?mode=memory&cache=shared"},
+	}
 	if path == "" {
 		return cfg, nil
 	}
@@ -39,6 +48,9 @@ func Load(path string) (*Config, error) {
 	}
 	if len(cfg.Server.AllowedOrigins) == 0 {
 		cfg.Server.AllowedOrigins = []string{"*"}
+	}
+	if cfg.DB.DSN == "" {
+		cfg.DB.DSN = "file:oss-catalog.db?mode=memory&cache=shared"
 	}
 	return cfg, nil
 }
