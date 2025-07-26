@@ -59,6 +59,28 @@ func TestUserRepository_Get(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestUserRepository_FindByUsername(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &UserRepository{DB: db}
+
+	username := "admin"
+	query := regexp.QuoteMeta("SELECT id, username, display_name, email, password_hash, roles, active, created_at, updated_at FROM users WHERE username = ?")
+	now := time.Now()
+	id := uuid.NewString()
+	mock.ExpectQuery(query).WithArgs(username).WillReturnRows(
+		sqlmock.NewRows([]string{"id", "username", "display_name", "email", "password_hash", "roles", "active", "created_at", "updated_at"}).
+			AddRow(id, username, nil, nil, "hash", pq.StringArray{"ADMIN"}, true, now, now),
+	)
+
+	u, err := repo.FindByUsername(context.Background(), username)
+	require.NoError(t, err)
+	require.Equal(t, username, u.Username)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestUserRepository_Create(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
