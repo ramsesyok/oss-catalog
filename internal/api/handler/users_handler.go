@@ -175,8 +175,3 @@ func (h *Handler) DeleteUser(ctx echo.Context, userId openapi_types.UUID) error 
 	}
 	return ctx.NoContent(http.StatusNoContent)
 }
-
-// GetCurrentUser 現在ログイン中ユーザー取得 (GET /me)
-func (h *Handler) GetCurrentUser(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, map[string]any{"placeholder": "todo"})
-}
