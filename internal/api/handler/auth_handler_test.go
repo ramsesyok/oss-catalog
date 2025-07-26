@@ -124,3 +124,24 @@ func TestExpiredToken(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, rec.Code)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
+
+func TestRouterRolesForbidden(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer db.Close()
+
+	repo := &infrarepo.UserRepository{DB: db}
+	h := &handler.Handler{UserRepo: repo}
+	e, _ := setupAuthEcho(h)
+
+	viewer := &model.User{ID: uuid.NewString(), Username: "view", PasswordHash: "pass", Roles: []string{"VIEWER"}, Active: true}
+	token, _, _ := auth.GenerateToken(viewer)
+
+	req := httptest.NewRequest(http.MethodGet, "/users", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusForbidden, rec.Code)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
