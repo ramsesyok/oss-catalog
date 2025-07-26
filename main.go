@@ -12,6 +12,7 @@ import (
 	"github.com/ramsesyok/oss-catalog/internal/api/handler"
 	"github.com/ramsesyok/oss-catalog/internal/config"
 	infradb "github.com/ramsesyok/oss-catalog/internal/infra/db"
+	"github.com/ramsesyok/oss-catalog/internal/infra/migration"
 	infrarepo "github.com/ramsesyok/oss-catalog/internal/infra/repository"
 
 	"github.com/labstack/echo/v4"
@@ -35,6 +36,10 @@ func runServer(host, port, dsn string, origins []string) error {
 		return err
 	}
 	defer dbConn.Close()
+
+	if err := migration.Apply(dbConn.DB, dsn); err != nil {
+		return err
+	}
 
 	h := handler.Handler{
 		AuditRepo:             &infrarepo.AuditLogRepository{DB: dbConn.DB},
