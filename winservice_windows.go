@@ -18,6 +18,7 @@ func isWindowsService() (bool, error) {
 type service struct {
 	host    string
 	port    string
+	dsn     string
 	origins []string
 }
 
@@ -25,7 +26,7 @@ func (m *service) Execute(args []string, r <-chan svc.ChangeRequest, s chan<- sv
 	const accepted = svc.AcceptStop | svc.AcceptShutdown
 	s <- svc.Status{State: svc.StartPending}
 	go func() {
-		if err := runServer(m.host, m.port, m.origins); err != nil {
+		if err := runServer(m.host, m.port, m.dsn, m.origins); err != nil {
 			log.Printf("server error: %v", err)
 		}
 	}()
@@ -43,8 +44,8 @@ func (m *service) Execute(args []string, r <-chan svc.ChangeRequest, s chan<- sv
 	}
 }
 
-func runService(name, host, port string, origins []string) error {
-	return svc.Run(name, &service{host: host, port: port, origins: origins})
+func runService(name, host, port, dsn string, origins []string) error {
+	return svc.Run(name, &service{host: host, port: port, dsn: dsn, origins: origins})
 }
 
 func installService(name, desc string) error {

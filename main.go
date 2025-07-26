@@ -11,6 +11,8 @@ import (
 	gen "github.com/ramsesyok/oss-catalog/internal/api/gen"
 	"github.com/ramsesyok/oss-catalog/internal/api/handler"
 	"github.com/ramsesyok/oss-catalog/internal/config"
+	infradb "github.com/ramsesyok/oss-catalog/internal/infra/db"
+	infrarepo "github.com/ramsesyok/oss-catalog/internal/infra/repository"
 
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
@@ -19,7 +21,7 @@ import (
 
 const serviceName = "oss-catalog"
 
-func runServer(host, port string, origins []string) error {
+func runServer(host, port, dsn string, origins []string) error {
 	// OASテンプレートの読み込み
 	swagger, err := gen.GetSwagger()
 	if err != nil {
@@ -28,7 +30,24 @@ func runServer(host, port string, origins []string) error {
 	// ホスト名での検証は行わない
 	swagger.Servers = nil
 
-	h := handler.Handler{}
+	dbConn, err := infradb.Open(dsn)
+	if err != nil {
+		return err
+	}
+	defer dbConn.Close()
+
+	h := handler.Handler{
+		AuditRepo:             &infrarepo.AuditLogRepository{DB: dbConn.DB},
+		ScopePolicyRepo:       &infrarepo.ScopePolicyRepository{DB: dbConn.DB},
+		OssComponentRepo:      &infrarepo.OssComponentRepository{DB: dbConn.DB},
+		OssComponentLayerRepo: &infrarepo.OssComponentLayerRepository{DB: dbConn.DB},
+		OssComponentTagRepo:   &infrarepo.OssComponentTagRepository{DB: dbConn.DB},
+		TagRepo:               &infrarepo.TagRepository{DB: dbConn.DB},
+		OssVersionRepo:        &infrarepo.OssVersionRepository{DB: dbConn.DB},
+		ProjectRepo:           &infrarepo.ProjectRepository{DB: dbConn.DB},
+		ProjectUsageRepo:      &infrarepo.ProjectUsageRepository{DB: dbConn.DB},
+		UserRepo:              &infrarepo.UserRepository{DB: dbConn.DB},
+	}
 
 	e := echo.New()
 	e.Use(echomiddleware.Logger())
@@ -67,14 +86,14 @@ func main() {
 
 		isSvc, err := isWindowsService()
 		if err == nil && isSvc {
-			if err := runService(serviceName, cfg.Server.Host, cfg.Server.Port, cfg.Server.AllowedOrigins); err != nil {
+			if err := runService(serviceName, cfg.Server.Host, cfg.Server.Port, cfg.DB.DSN, cfg.Server.AllowedOrigins); err != nil {
 				log.Fatalf("service run failed: %v", err)
 			}
 			return
 		}
 	}
 
-	if err := runServer(cfg.Server.Host, cfg.Server.Port, cfg.Server.AllowedOrigins); err != nil {
+	if err := runServer(cfg.Server.Host, cfg.Server.Port, cfg.DB.DSN, cfg.Server.AllowedOrigins); err != nil {
 		log.Fatalf("server error: %v", err)
 	}
 }
