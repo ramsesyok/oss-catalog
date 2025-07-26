@@ -2,6 +2,8 @@ package migration
 
 import (
 	"database/sql"
+	"os"
+	"path/filepath"
 	"testing"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -20,4 +22,17 @@ func TestApply_SQLite(t *testing.T) {
 	err = db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='tags'`).Scan(&name)
 	require.NoError(t, err)
 	require.Equal(t, "tags", name)
+
+	var cnt int
+	err = db.QueryRow(`SELECT COUNT(*) FROM users WHERE username = 'admin'`).Scan(&cnt)
+	require.NoError(t, err)
+	require.Equal(t, 1, cnt)
+
+	exe, err := os.Executable()
+	require.NoError(t, err)
+	p := filepath.Join(filepath.Dir(exe), "admin.initial.password")
+	data, err := os.ReadFile(p)
+	require.NoError(t, err)
+	require.NotEmpty(t, data)
+	os.Remove(p)
 }
