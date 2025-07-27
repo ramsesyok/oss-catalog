@@ -21,6 +21,12 @@ func Open(dsn string) (*DB, error) {
 	driver := "sqlite3"
 	if strings.HasPrefix(dsn, "postgres://") || strings.HasPrefix(dsn, "postgresql://") {
 		driver = "postgres"
+	} else if !strings.Contains(dsn, "_loc=") {
+		if strings.Contains(dsn, "?") {
+			dsn += "&_loc=auto"
+		} else {
+			dsn += "?_loc=auto"
+		}
 	}
 	db, err := sql.Open(driver, dsn)
 	if err != nil {
