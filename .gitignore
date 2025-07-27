@@ -32,4 +32,6 @@ admin.initial.password
 
 # Editor/IDE
 # .idea/
-# .vscode/
+.vscode/
+.venv
+oss-catalog.db
