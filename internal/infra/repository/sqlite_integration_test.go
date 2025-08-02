@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
@@ -40,7 +42,7 @@ func TestRepositories_SQLite(t *testing.T) {
 		defer db.Close()
 
 		repo := &TagRepository{DB: db}
-		now := time.Now()
+		now := dbtime.DBTime{Time: time.Now()}
 		tag := &model.Tag{ID: uuid.NewString(), Name: "db", CreatedAt: &now}
 		require.NoError(t, repo.Create(ctx, tag))
 		tags, err := repo.List(ctx)
@@ -61,7 +63,7 @@ func TestRepositories_SQLite(t *testing.T) {
 		tagRepo := &TagRepository{DB: db}
 		compTagRepo := &OssComponentTagRepository{DB: db}
 
-		now := time.Now()
+		now := dbtime.DBTime{Time: time.Now()}
 		tag := &model.Tag{ID: uuid.NewString(), Name: "db", CreatedAt: &now}
 		require.NoError(t, tagRepo.Create(ctx, tag))
 
@@ -106,7 +108,7 @@ func TestRepositories_SQLite(t *testing.T) {
 		compRepo := &OssComponentRepository{DB: db}
 		verRepo := &OssVersionRepository{DB: db}
 
-		now := time.Now()
+		now := dbtime.DBTime{Time: time.Now()}
 		comp := &model.OssComponent{ID: uuid.NewString(), Name: "Redis", NormalizedName: "redis", CreatedAt: now, UpdatedAt: now}
 		require.NoError(t, compRepo.Create(ctx, comp))
 
@@ -126,7 +128,7 @@ func TestRepositories_SQLite(t *testing.T) {
 		require.Equal(t, ver.ID, got.ID)
 
 		ver.ReviewStatus = "verified"
-		ver.UpdatedAt = time.Now()
+		ver.UpdatedAt = dbtime.DBTime{Time: time.Now()}
 		require.NoError(t, verRepo.Update(ctx, ver))
 
 		res, total, err := verRepo.Search(ctx, domrepo.OssVersionFilter{OssID: comp.ID, ReviewStatus: "verified", Page: 1, Size: 10})
@@ -145,7 +147,7 @@ func TestRepositories_SQLite(t *testing.T) {
 		defer db.Close()
 		repo := &ProjectRepository{DB: db}
 
-		now := time.Now()
+		now := dbtime.DBTime{Time: time.Now()}
 		proj := &model.Project{ID: uuid.NewString(), ProjectCode: "P1", Name: "Proj", CreatedAt: now, UpdatedAt: now}
 		require.NoError(t, repo.Create(ctx, proj))
 
@@ -154,7 +156,7 @@ func TestRepositories_SQLite(t *testing.T) {
 		require.Equal(t, proj.ID, p.ID)
 
 		proj.Name = "Updated"
-		proj.UpdatedAt = time.Now()
+		proj.UpdatedAt = dbtime.DBTime{Time: time.Now()}
 		require.NoError(t, repo.Update(ctx, proj))
 
 		res, total, err := repo.Search(ctx, domrepo.ProjectFilter{Name: "Upd", Page: 1, Size: 10})
@@ -173,7 +175,7 @@ func TestRepositories_SQLite(t *testing.T) {
 		projRepo := &ProjectRepository{DB: db}
 		usageRepo := &ProjectUsageRepository{DB: db}
 
-		now := time.Now()
+		now := dbtime.DBTime{Time: time.Now()}
 		comp := &model.OssComponent{ID: uuid.NewString(), Name: "Redis", NormalizedName: "redis", CreatedAt: now, UpdatedAt: now}
 		require.NoError(t, compRepo.Create(ctx, comp))
 		ver := &model.OssVersion{ID: uuid.NewString(), OssID: comp.ID, Version: "1.0.0", ReviewStatus: "draft", ScopeStatus: "IN_SCOPE", CreatedAt: now, UpdatedAt: now}
@@ -202,7 +204,7 @@ func TestRepositories_SQLite(t *testing.T) {
 		require.NoError(t, usageRepo.Update(ctx, usage))
 
 		note := "out"
-		now2 := time.Now()
+		now2 := dbtime.DBTime{Time: time.Now()}
 		user := "tester"
 		require.NoError(t, usageRepo.UpdateScope(ctx, usage.ID, "OUT_SCOPE", &note, now2, &user))
 
@@ -213,7 +215,7 @@ func TestRepositories_SQLite(t *testing.T) {
 		db := setupSQLiteDB(t)
 		defer db.Close()
 		repo := &ScopePolicyRepository{DB: db}
-		now := time.Now()
+		now := dbtime.DBTime{Time: time.Now()}
 		policy := &model.ScopePolicy{ID: uuid.NewString(), RuntimeRequiredDefaultInScope: true, ServerEnvIncluded: false, AutoMarkForksInScope: true, UpdatedAt: now, UpdatedBy: "user"}
 		require.NoError(t, repo.Update(ctx, policy))
 		p, err := repo.Get(ctx)
@@ -225,7 +227,7 @@ func TestRepositories_SQLite(t *testing.T) {
 		db := setupSQLiteDB(t)
 		defer db.Close()
 		repo := &AuditLogRepository{DB: db}
-		now := time.Now()
+		now := dbtime.DBTime{Time: time.Now()}
 		l := &model.AuditLog{ID: uuid.NewString(), EntityType: "PROJECT", EntityID: "1", Action: "CREATE", UserName: "user", CreatedAt: now}
 		require.NoError(t, repo.Create(ctx, l))
 		et := "PROJECT"

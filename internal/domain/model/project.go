@@ -1,6 +1,6 @@
 package model
 
-import "time"
+import "github.com/ramsesyok/oss-catalog/pkg/dbtime"
 
 // Project はデリバリーユニットのプロジェクトを表すモデル。
 type Project struct {
@@ -9,9 +9,9 @@ type Project struct {
 	Name          string
 	Department    *string
 	Manager       *string
-	DeliveryDate  *time.Time
+	DeliveryDate  *dbtime.DBTime
 	Description   *string
 	OssUsageCount int
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	CreatedAt     dbtime.DBTime
+	UpdatedAt     dbtime.DBTime
 }

@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -22,7 +24,7 @@ func TestTagRepository_List(t *testing.T) {
 	repo := &TagRepository{DB: db}
 
 	query := regexp.QuoteMeta(`SELECT id, name, created_at FROM tags ORDER BY created_at DESC`)
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	rows := sqlmock.NewRows([]string{"id", "name", "created_at"}).
 		AddRow(uuid.NewString(), "db", now)
 	mock.ExpectQuery(query).WillReturnRows(rows)
@@ -55,7 +57,7 @@ func TestTagRepository_Create(t *testing.T) {
 
 	repo := &TagRepository{DB: db}
 
-	t1 := &model.Tag{ID: uuid.NewString(), Name: "db", CreatedAt: func() *time.Time { v := time.Now(); return &v }()}
+	t1 := &model.Tag{ID: uuid.NewString(), Name: "db", CreatedAt: func() *dbtime.DBTime { v := dbtime.DBTime{Time: time.Now()}; return &v }()}
 
 	query := regexp.QuoteMeta(`INSERT INTO tags (id, name, created_at) VALUES (?, ?, ?)`)
 	mock.ExpectExec(query).WithArgs(t1.ID, t1.Name, t1.CreatedAt).WillReturnResult(sqlmock.NewResult(1, 1))

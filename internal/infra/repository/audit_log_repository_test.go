@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -25,7 +27,7 @@ func TestAuditLogRepository_Search(t *testing.T) {
 	f := domrepo.AuditLogFilter{EntityType: func() *string { s := "PROJECT"; return &s }()}
 
 	query := regexp.QuoteMeta("SELECT id, entity_type, entity_id, action, user_name, summary, created_at FROM audit_logs WHERE entity_type = ? ORDER BY created_at DESC")
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	rows := sqlmock.NewRows([]string{"id", "entity_type", "entity_id", "action", "user_name", "summary", "created_at"}).
 		AddRow(uuid.NewString(), "PROJECT", "1", "CREATE", "user", "created", now)
 	mock.ExpectQuery(query).WithArgs("PROJECT").WillReturnRows(rows)
@@ -45,8 +47,8 @@ func TestAuditLogRepository_Search_AllFilters(t *testing.T) {
 
 	et := "PROJECT"
 	eid := "1"
-	from := time.Now().Add(-time.Hour)
-	to := time.Now()
+	from := dbtime.DBTime{Time: time.Now().Add(-time.Hour)}
+	to := dbtime.DBTime{Time: time.Now()}
 	f := domrepo.AuditLogFilter{EntityType: &et, EntityID: &eid, From: &from, To: &to}
 
 	query := regexp.QuoteMeta("SELECT id, entity_type, entity_id, action, user_name, summary, created_at FROM audit_logs WHERE entity_type = ? AND entity_id = ? AND created_at >= ? AND created_at <= ? ORDER BY created_at DESC")
@@ -89,7 +91,7 @@ func TestAuditLogRepository_Create(t *testing.T) {
 		EntityID:   "1",
 		Action:     "CREATE",
 		UserName:   "user",
-		CreatedAt:  time.Now(),
+		CreatedAt:  dbtime.DBTime{Time: time.Now()},
 	}
 
 	query := regexp.QuoteMeta("INSERT INTO audit_logs (id, entity_type, entity_id, action, user_name, summary, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)")

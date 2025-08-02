@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -21,8 +23,8 @@ func toUser(m model.User) gen.User {
 		Id:        uid,
 		Username:  m.Username,
 		Active:    m.Active,
-		CreatedAt: m.CreatedAt,
-		UpdatedAt: m.UpdatedAt,
+		CreatedAt: m.CreatedAt.TimeValue(),
+		UpdatedAt: m.UpdatedAt.TimeValue(),
 	}
 	if m.DisplayName != nil {
 		res.DisplayName = m.DisplayName
@@ -78,7 +80,7 @@ func (h *Handler) CreateUser(ctx echo.Context) error {
 	if err := ctx.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid body")
 	}
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	id := uuid.NewString()
 	active := true
 	if req.Active != nil {
@@ -160,7 +162,7 @@ func (h *Handler) UpdateUser(ctx echo.Context, userId openapi_types.UUID) error 
 	if req.Active != nil {
 		u.Active = *req.Active
 	}
-	u.UpdatedAt = time.Now()
+	u.UpdatedAt = dbtime.DBTime{Time: time.Now()}
 	if err := h.UserRepo.Update(ctx.Request().Context(), u); err != nil {
 		return err
 	}

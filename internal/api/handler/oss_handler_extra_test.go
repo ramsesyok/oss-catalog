@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/require"
@@ -107,7 +109,7 @@ func (s *stubOssVersionRepo) Update(ctx context.Context, v *model.OssVersion) er
 
 // --- tests ---
 func TestToOssComponent_AllFields(t *testing.T) {
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	hp := "http://hp"
 	repo := "http://repo"
 	desc := "d"
@@ -131,7 +133,7 @@ func TestToOssComponent_AllFields(t *testing.T) {
 }
 
 func TestToOssVersion_AllFields(t *testing.T) {
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	rel := now
 	licRaw := "MIT"
 	licConc := "MIT"
@@ -192,7 +194,7 @@ func TestCreateOssComponent(t *testing.T) {
 
 func TestListOssVersions(t *testing.T) {
 	ossID := uuid.NewString()
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	repo := &stubOssVersionRepo{searchFn: func(ctx context.Context, f domrepo.OssVersionFilter) ([]model.OssVersion, int, error) {
 		require.Equal(t, ossID, f.OssID)
 		return []model.OssVersion{{ID: uuid.NewString(), OssID: ossID, Version: "1", ReviewStatus: "draft", ScopeStatus: "IN_SCOPE", CreatedAt: now, UpdatedAt: now}}, 1, nil
@@ -237,7 +239,7 @@ func TestCreateOssVersion_WithOptions(t *testing.T) {
 	}}
 	h := &Handler{OssVersionRepo: repo}
 	e := setupEcho(h)
-	now := time.Now().UTC().Truncate(time.Second)
+	now := dbtime.DBTime{Time: time.Now().UTC().Truncate(time.Second)}
 	body := `{"version":"1.0.0","releaseDate":"` + now.Format("2006-01-02") + `","purl":"pkg:","cpeList":["c"],"modified":true,"supplierType":"ORIGIN"}`
 	req := httptest.NewRequest(http.MethodPost, "/oss/"+ossID+"/versions", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -308,7 +310,7 @@ func TestOssComponentStubMethods(t *testing.T) {
 func TestUpdateOssVersion(t *testing.T) {
 	ossID := uuid.NewString()
 	vid := uuid.NewString()
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	existing := model.OssVersion{ID: vid, OssID: ossID, Version: "1", ReviewStatus: "draft", ScopeStatus: "IN_SCOPE", CreatedAt: now, UpdatedAt: now}
 	var updated *model.OssVersion
 	repo := &stubOssVersionRepo{getFn: func(ctx context.Context, id string) (*model.OssVersion, error) {
@@ -331,7 +333,7 @@ func TestUpdateOssVersion(t *testing.T) {
 func TestUpdateOssVersion_WithFields(t *testing.T) {
 	ossID := uuid.NewString()
 	vid := uuid.NewString()
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	existing := model.OssVersion{ID: vid, OssID: ossID, Version: "1", ReviewStatus: "draft", ScopeStatus: "IN_SCOPE", CreatedAt: now, UpdatedAt: now}
 	var updated *model.OssVersion
 	repo := &stubOssVersionRepo{getFn: func(ctx context.Context, id string) (*model.OssVersion, error) {

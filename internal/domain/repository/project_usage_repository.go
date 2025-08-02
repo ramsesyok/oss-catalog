@@ -2,7 +2,8 @@ package repository
 
 import (
 	"context"
-	"time"
+
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
 
 	"github.com/ramsesyok/oss-catalog/internal/domain/model"
 )
@@ -23,5 +24,5 @@ type ProjectUsageRepository interface {
 	Create(ctx context.Context, u *model.ProjectUsage) error
 	Update(ctx context.Context, u *model.ProjectUsage) error
 	Delete(ctx context.Context, id string) error
-	UpdateScope(ctx context.Context, id string, scopeStatus string, inclusionNote *string, evaluatedAt time.Time, evaluatedBy *string) error
+	UpdateScope(ctx context.Context, id string, scopeStatus string, inclusionNote *string, evaluatedAt dbtime.DBTime, evaluatedBy *string) error
 }

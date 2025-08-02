@@ -9,16 +9,26 @@ import (
 
 	gen "github.com/ramsesyok/oss-catalog/internal/api/gen"
 	domrepo "github.com/ramsesyok/oss-catalog/internal/domain/repository"
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
 )
 
 // 監査ログ簡易検索 (Phase1簡易)
 // (GET /audit)
 func (h *Handler) SearchAuditLogs(ctx echo.Context, params gen.SearchAuditLogsParams) error {
+	var from, to *dbtime.DBTime
+	if params.From != nil {
+		v := dbtime.DBTime{Time: params.From.UTC()}
+		from = &v
+	}
+	if params.To != nil {
+		v := dbtime.DBTime{Time: params.To.UTC()}
+		to = &v
+	}
 	filter := domrepo.AuditLogFilter{
 		EntityType: params.EntityType,
 		EntityID:   params.EntityId,
-		From:       params.From,
-		To:         params.To,
+		From:       from,
+		To:         to,
 	}
 
 	logs, err := h.AuditRepo.Search(ctx.Request().Context(), filter)
@@ -33,7 +43,7 @@ func (h *Handler) SearchAuditLogs(ctx echo.Context, params gen.SearchAuditLogsPa
 			"entityType": l.EntityType,
 			"entityId":   l.EntityID,
 			"action":     l.Action,
-			"at":         l.CreatedAt,
+			"at":         l.CreatedAt.TimeValue(),
 			"user":       l.UserName,
 		}
 		if l.Summary != nil {

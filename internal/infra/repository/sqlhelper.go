@@ -3,7 +3,8 @@ package repository
 import (
 	"database/sql"
 	"strings"
-	"time"
+
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
 )
 
 // whereClause は条件句の配列から WHERE 句文字列を生成する。
@@ -23,9 +24,10 @@ func strPtr(ns sql.NullString) *string {
 }
 
 // timePtr は NullTime から *time.Time を生成する。
-func timePtr(nt sql.NullTime) *time.Time {
+func timePtr(nt sql.NullTime) *dbtime.DBTime {
 	if nt.Valid {
-		return &nt.Time
+		t := dbtime.DBTime{Time: nt.Time}
+		return &t
 	}
 	return nil
 }

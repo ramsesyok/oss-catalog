@@ -1,6 +1,6 @@
 package model
 
-import "time"
+import "github.com/ramsesyok/oss-catalog/pkg/dbtime"
 
 // User はシステム利用ユーザー情報を表すモデル。
 type User struct {
@@ -11,6 +11,6 @@ type User struct {
 	PasswordHash string
 	Roles        []string
 	Active       bool
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	CreatedAt    dbtime.DBTime
+	UpdatedAt    dbtime.DBTime
 }
