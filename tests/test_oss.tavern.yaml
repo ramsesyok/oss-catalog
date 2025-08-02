@@ -1,5 +1,10 @@
 test_name: "list oss"
 
+# Suppress deprecation warnings from pytest's assertion rewriting
+marks:
+  - filterwarnings: "ignore:ast.Str is deprecated:DeprecationWarning"
+  - filterwarnings: "ignore:Attribute s is deprecated:DeprecationWarning"
+
 stages:
   - name: get list
     request:
