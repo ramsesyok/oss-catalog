@@ -2,11 +2,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"net"
 	"runtime"
 
+	"github.com/getkin/kin-openapi/openapi3filter"
 	apirouter "github.com/ramsesyok/oss-catalog/internal/api"
 	gen "github.com/ramsesyok/oss-catalog/internal/api/gen"
 	"github.com/ramsesyok/oss-catalog/internal/api/handler"
@@ -60,7 +62,14 @@ func runServer(host, port, dsn string, origins []string) error {
 		AllowOrigins: origins,
 	}))
 	// OASテンプレートで指定したスキーマによる検証を行う
-	e.Use(middleware.OapiRequestValidator(swagger))
+	// 認証は別ミドルウェアで行うため、バリデータ側ではセキュリティチェックをスキップする
+	e.Use(middleware.OapiRequestValidatorWithOptions(swagger, &middleware.Options{
+		Options: openapi3filter.Options{
+			AuthenticationFunc: func(ctx context.Context, _ *openapi3filter.AuthenticationInput) error {
+				return nil
+			},
+		},
+	}))
 	apirouter.RegisterRoutes(e, &h)
 	return e.Start(net.JoinHostPort(host, port))
 }
