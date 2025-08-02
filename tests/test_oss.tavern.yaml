@@ -1,0 +1,16 @@
+test_name: "list oss"
+
+stages:
+  - name: get list
+    request:
+      url: "{tavern.env_vars.BASE_URL}/oss"
+      method: GET
+      headers:
+        Authorization: "Bearer {tavern.env_vars.TOKEN}"
+    response:
+      status_code: 200
+      json:
+        page: 1
+        size: 50
+        total: 0
+        items: []
