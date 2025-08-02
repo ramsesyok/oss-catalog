@@ -2,7 +2,8 @@ package repository
 
 import (
 	"context"
-	"time"
+
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
 
 	"github.com/ramsesyok/oss-catalog/internal/domain/model"
 )
@@ -11,8 +12,8 @@ import (
 type AuditLogFilter struct {
 	EntityType *string
 	EntityID   *string
-	From       *time.Time
-	To         *time.Time
+	From       *dbtime.DBTime
+	To         *dbtime.DBTime
 }
 
 // AuditLogRepository は監査ログの永続化処理を定義する。

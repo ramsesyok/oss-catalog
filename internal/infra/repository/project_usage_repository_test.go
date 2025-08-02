@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -29,7 +31,7 @@ func TestProjectUsageRepository_Search(t *testing.T) {
 	mock.ExpectQuery(countQuery).WithArgs(pid).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
 	listQuery := regexp.QuoteMeta("SELECT id, project_id, oss_id, oss_version_id, usage_role, scope_status, inclusion_note, direct_dependency, added_at, evaluated_at, evaluated_by FROM project_usages WHERE project_id = ? ORDER BY added_at DESC LIMIT ? OFFSET ?")
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	rows := sqlmock.NewRows([]string{"id", "project_id", "oss_id", "oss_version_id", "usage_role", "scope_status", "inclusion_note", "direct_dependency", "added_at", "evaluated_at", "evaluated_by"}).
 		AddRow(uuid.NewString(), pid, uuid.NewString(), uuid.NewString(), "RUNTIME_REQUIRED", "IN_SCOPE", nil, true, now, nil, nil)
 	mock.ExpectQuery(listQuery).WithArgs(pid, 10, 0).WillReturnRows(rows)
@@ -94,7 +96,7 @@ func TestProjectUsageRepository_Create(t *testing.T) {
 		UsageRole:        "RUNTIME_REQUIRED",
 		ScopeStatus:      "IN_SCOPE",
 		DirectDependency: true,
-		AddedAt:          time.Now(),
+		AddedAt:          dbtime.DBTime{Time: time.Now()},
 	}
 
 	query := regexp.QuoteMeta("INSERT INTO project_usages (id, project_id, oss_id, oss_version_id, usage_role, scope_status, inclusion_note, direct_dependency, added_at, evaluated_at, evaluated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
@@ -121,7 +123,7 @@ func TestProjectUsageRepository_Update(t *testing.T) {
 		DirectDependency: false,
 		InclusionNote:    func() *string { s := "note"; return &s }(),
 		ScopeStatus:      "IN_SCOPE",
-		EvaluatedAt:      func() *time.Time { t := time.Now(); return &t }(),
+		EvaluatedAt:      func() *dbtime.DBTime { t := dbtime.DBTime{Time: time.Now()}; return &t }(),
 		EvaluatedBy:      func() *string { s := "user"; return &s }(),
 	}
 
@@ -161,7 +163,7 @@ func TestProjectUsageRepository_UpdateScope(t *testing.T) {
 	id := uuid.NewString()
 	inclusion := "reason"
 	evalBy := "user"
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 
 	query := regexp.QuoteMeta("UPDATE project_usages SET scope_status = ?, inclusion_note = ?, evaluated_at = ?, evaluated_by = ? WHERE id = ?")
 	mock.ExpectExec(query).WithArgs("OUT_SCOPE", &inclusion, now, &evalBy, id).WillReturnResult(sqlmock.NewResult(1, 1))

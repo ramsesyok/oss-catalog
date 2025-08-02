@@ -1,6 +1,6 @@
 package model
 
-import "time"
+import "github.com/ramsesyok/oss-catalog/pkg/dbtime"
 
 // AuditLog は監査ログの 1 レコードを表す。
 type AuditLog struct {
@@ -10,5 +10,5 @@ type AuditLog struct {
 	Action     string
 	UserName   string
 	Summary    *string
-	CreatedAt  time.Time
+	CreatedAt  dbtime.DBTime
 }

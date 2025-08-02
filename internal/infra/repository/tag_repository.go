@@ -3,7 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"time"
+
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
 
 	"github.com/ramsesyok/oss-catalog/internal/domain/model"
 	domrepo "github.com/ramsesyok/oss-catalog/internal/domain/repository"
@@ -27,7 +28,7 @@ func (r *TagRepository) List(ctx context.Context) ([]model.Tag, error) {
 	var tags []model.Tag
 	for rows.Next() {
 		var t model.Tag
-		var created time.Time
+		var created dbtime.DBTime
 		if err := rows.Scan(&t.ID, &t.Name, &created); err != nil {
 			return nil, err
 		}

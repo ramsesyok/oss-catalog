@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -21,7 +23,7 @@ func TestScopePolicyRepository_Get(t *testing.T) {
 	repo := &ScopePolicyRepository{DB: db}
 
 	query := regexp.QuoteMeta(`SELECT id, runtime_required_default_in_scope, server_env_included, auto_mark_forks_in_scope, updated_at, updated_by FROM scope_policies LIMIT 1`)
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	rows := sqlmock.NewRows([]string{"id", "runtime_required_default_in_scope", "server_env_included", "auto_mark_forks_in_scope", "updated_at", "updated_by"}).
 		AddRow(uuid.NewString(), true, false, true, now, "user")
 	mock.ExpectQuery(query).WillReturnRows(rows)
@@ -59,7 +61,7 @@ func TestScopePolicyRepository_Update(t *testing.T) {
 		RuntimeRequiredDefaultInScope: true,
 		ServerEnvIncluded:             false,
 		AutoMarkForksInScope:          true,
-		UpdatedAt:                     time.Now(),
+		UpdatedAt:                     dbtime.DBTime{Time: time.Now()},
 		UpdatedBy:                     "user",
 	}
 

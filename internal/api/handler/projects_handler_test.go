@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -30,7 +32,7 @@ func TestListProjects(t *testing.T) {
 	e := setupEcho(h)
 
 	id := uuid.NewString()
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	countQuery := regexp.QuoteMeta("SELECT COUNT(*) FROM projects WHERE project_code LIKE ?")
 	mock.ExpectQuery(countQuery).WithArgs("%PRJ%").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
@@ -80,7 +82,7 @@ func TestGetProject_OK(t *testing.T) {
 	e := setupEcho(h)
 
 	pid := uuid.NewString()
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	query := regexp.QuoteMeta("SELECT id, project_code, name, department, manager, delivery_date, description, created_at, updated_at, (SELECT COUNT(*) FROM project_usages u WHERE u.project_id = projects.id) FROM projects WHERE id = ?")
 	mock.ExpectQuery(query).WithArgs(pid).WillReturnRows(sqlmock.NewRows([]string{"id", "project_code", "name", "department", "manager", "delivery_date", "description", "created_at", "updated_at", "count"}).AddRow(pid, "P1", "Proj", nil, nil, nil, nil, now, now, 0))
 
@@ -191,7 +193,7 @@ func TestUpdateProject(t *testing.T) {
 	e := setupEcho(h)
 
 	pid := uuid.NewString()
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	getQuery := regexp.QuoteMeta("SELECT id, project_code, name, department, manager, delivery_date, description, created_at, updated_at, (SELECT COUNT(*) FROM project_usages u WHERE u.project_id = projects.id) FROM projects WHERE id = ?")
 	mock.ExpectQuery(getQuery).WithArgs(pid).WillReturnRows(sqlmock.NewRows([]string{"id", "project_code", "name", "department", "manager", "delivery_date", "description", "created_at", "updated_at", "count"}).AddRow(pid, "P1", "Proj", nil, nil, nil, nil, now, now, 0))
 	updateQuery := regexp.QuoteMeta("UPDATE projects SET name = ?, department = ?, manager = ?, delivery_date = ?, description = ?, updated_at = ? WHERE id = ?")
@@ -220,7 +222,7 @@ func TestListProjectUsages(t *testing.T) {
 	countQuery := regexp.QuoteMeta("SELECT COUNT(*) FROM project_usages WHERE project_id = ?")
 	mock.ExpectQuery(countQuery).WithArgs(pid).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 	listQuery := regexp.QuoteMeta("SELECT id, project_id, oss_id, oss_version_id, usage_role, scope_status, inclusion_note, direct_dependency, added_at, evaluated_at, evaluated_by FROM project_usages WHERE project_id = ? ORDER BY added_at DESC LIMIT ? OFFSET ?")
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	mock.ExpectQuery(listQuery).WithArgs(pid, 50, 0).WillReturnRows(sqlmock.NewRows([]string{"id", "project_id", "oss_id", "oss_version_id", "usage_role", "scope_status", "inclusion_note", "direct_dependency", "added_at", "evaluated_at", "evaluated_by"}).AddRow(uuid.NewString(), pid, uuid.NewString(), uuid.NewString(), "RUNTIME_REQUIRED", "IN_SCOPE", nil, true, now, nil, nil))
 
 	req := httptest.NewRequest(http.MethodGet, "/projects/"+pid+"/usages", nil)
@@ -247,7 +249,7 @@ func TestCreateProjectUsage(t *testing.T) {
 
 	pid := uuid.NewString()
 	policyQuery := regexp.QuoteMeta("SELECT id, runtime_required_default_in_scope, server_env_included, auto_mark_forks_in_scope, updated_at, updated_by FROM scope_policies LIMIT 1")
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	mock.ExpectQuery(policyQuery).WillReturnRows(sqlmock.NewRows([]string{"id", "runtime_required_default_in_scope", "server_env_included", "auto_mark_forks_in_scope", "updated_at", "updated_by"}).AddRow(uuid.NewString(), true, false, false, now, "user"))
 	createQuery := regexp.QuoteMeta("INSERT INTO project_usages (id, project_id, oss_id, oss_version_id, usage_role, scope_status, inclusion_note, direct_dependency, added_at, evaluated_at, evaluated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	mock.ExpectExec(createQuery).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -411,7 +413,7 @@ func TestInitialScopeStatus(t *testing.T) {
 }
 
 func TestToProjectUsage(t *testing.T) {
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	u := model.ProjectUsage{ID: uuid.NewString(), ProjectID: uuid.NewString(), OssID: uuid.NewString(), OssVersionID: uuid.NewString(), UsageRole: "RUNTIME_REQUIRED", ScopeStatus: "IN_SCOPE", DirectDependency: true, AddedAt: now}
 	res := toProjectUsage(u)
 	require.Equal(t, u.ID, res.Id.String())
@@ -419,7 +421,7 @@ func TestToProjectUsage(t *testing.T) {
 }
 
 func TestToProject(t *testing.T) {
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	desc := "desc"
 	p := model.Project{ID: uuid.NewString(), ProjectCode: "P1", Name: "Proj", Description: &desc, CreatedAt: now, UpdatedAt: now}
 	res := toProject(p)

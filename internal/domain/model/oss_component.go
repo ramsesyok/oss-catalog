@@ -1,6 +1,6 @@
 package model
 
-import "time"
+import "github.com/ramsesyok/oss-catalog/pkg/dbtime"
 
 // OssComponent は OSS コンポーネントを表すドメインモデル。
 type OssComponent struct {
@@ -14,8 +14,8 @@ type OssComponent struct {
 	Layers           []string
 	DefaultUsageRole *string
 	Deprecated       bool
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	CreatedAt        dbtime.DBTime
+	UpdatedAt        dbtime.DBTime
 	Tags             []Tag
 }
 
@@ -23,5 +23,5 @@ type OssComponent struct {
 type Tag struct {
 	ID        string
 	Name      string
-	CreatedAt *time.Time
+	CreatedAt *dbtime.DBTime
 }

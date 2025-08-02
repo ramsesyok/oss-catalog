@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -28,7 +30,7 @@ func TestUserRepository_Search(t *testing.T) {
 	mock.ExpectQuery(countQuery).WithArgs("%adm%").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
 	listQuery := regexp.QuoteMeta("SELECT id, username, display_name, email, password_hash, roles, active, created_at, updated_at FROM users WHERE username LIKE ? ORDER BY created_at DESC LIMIT ? OFFSET ?")
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	rows := sqlmock.NewRows([]string{"id", "username", "display_name", "email", "password_hash", "roles", "active", "created_at", "updated_at"}).
 		AddRow(uuid.NewString(), "admin", nil, nil, "hash", pq.StringArray{"ADMIN"}, true, now, now)
 	mock.ExpectQuery(listQuery).WithArgs("%adm%", 10, 0).WillReturnRows(rows)
@@ -49,7 +51,7 @@ func TestUserRepository_Get(t *testing.T) {
 
 	id := uuid.NewString()
 	query := regexp.QuoteMeta("SELECT id, username, display_name, email, password_hash, roles, active, created_at, updated_at FROM users WHERE id = ?")
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	mock.ExpectQuery(query).WithArgs(id).WillReturnRows(sqlmock.NewRows([]string{"id", "username", "display_name", "email", "password_hash", "roles", "active", "created_at", "updated_at"}).
 		AddRow(id, "admin", nil, nil, "hash", pq.StringArray{"ADMIN"}, true, now, now))
 
@@ -68,7 +70,7 @@ func TestUserRepository_FindByUsername(t *testing.T) {
 
 	username := "admin"
 	query := regexp.QuoteMeta("SELECT id, username, display_name, email, password_hash, roles, active, created_at, updated_at FROM users WHERE username = ?")
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	id := uuid.NewString()
 	mock.ExpectQuery(query).WithArgs(username).WillReturnRows(
 		sqlmock.NewRows([]string{"id", "username", "display_name", "email", "password_hash", "roles", "active", "created_at", "updated_at"}).
@@ -88,7 +90,7 @@ func TestUserRepository_Create(t *testing.T) {
 
 	repo := &UserRepository{DB: db}
 
-	u := &model.User{ID: uuid.NewString(), Username: "admin", Roles: []string{"ADMIN"}, Active: true, CreatedAt: time.Now(), UpdatedAt: time.Now()}
+	u := &model.User{ID: uuid.NewString(), Username: "admin", Roles: []string{"ADMIN"}, Active: true, CreatedAt: dbtime.DBTime{Time: time.Now()}, UpdatedAt: dbtime.DBTime{Time: time.Now()}}
 
 	query := regexp.QuoteMeta("INSERT INTO users (id, username, display_name, email, password_hash, roles, active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	mock.ExpectExec(query).WithArgs(u.ID, u.Username, u.DisplayName, u.Email, u.PasswordHash, pq.Array(u.Roles), u.Active, u.CreatedAt, u.UpdatedAt).WillReturnResult(sqlmock.NewResult(1, 1))
@@ -105,7 +107,7 @@ func TestUserRepository_Update(t *testing.T) {
 
 	repo := &UserRepository{DB: db}
 
-	u := &model.User{ID: uuid.NewString(), PasswordHash: "h", Roles: []string{"ADMIN"}, Active: true, UpdatedAt: time.Now()}
+	u := &model.User{ID: uuid.NewString(), PasswordHash: "h", Roles: []string{"ADMIN"}, Active: true, UpdatedAt: dbtime.DBTime{Time: time.Now()}}
 
 	query := regexp.QuoteMeta("UPDATE users SET display_name = ?, email = ?, password_hash = ?, roles = ?, active = ?, updated_at = ? WHERE id = ?")
 	mock.ExpectExec(query).WithArgs(u.DisplayName, u.Email, u.PasswordHash, pq.Array(u.Roles), u.Active, u.UpdatedAt, u.ID).WillReturnResult(sqlmock.NewResult(1, 1))

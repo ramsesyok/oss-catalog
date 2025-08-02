@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -21,7 +23,7 @@ func TestOssComponentTagRepository_ListByOssID(t *testing.T) {
 
 	ossID := uuid.NewString()
 	query := regexp.QuoteMeta(`SELECT tg.id, tg.name, tg.created_at FROM tags tg JOIN oss_component_tags ct ON ct.tag_id = tg.id WHERE ct.oss_id = ? ORDER BY tg.created_at DESC`)
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	rows := sqlmock.NewRows([]string{"id", "name", "created_at"}).AddRow(uuid.NewString(), "db", now)
 	mock.ExpectQuery(query).WithArgs(ossID).WillReturnRows(rows)
 

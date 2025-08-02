@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
@@ -22,7 +24,7 @@ func toScopePolicy(m model.ScopePolicy) gen.ScopePolicy {
 		RuntimeRequiredDefaultInScope: &m.RuntimeRequiredDefaultInScope,
 		ServerEnvIncluded:             &m.ServerEnvIncluded,
 		AutoMarkForksInScope:          &m.AutoMarkForksInScope,
-		UpdatedAt:                     &m.UpdatedAt,
+		UpdatedAt:                     func() *time.Time { t := m.UpdatedAt.TimeValue(); return &t }(),
 		UpdatedBy:                     &m.UpdatedBy,
 	}
 }
@@ -54,7 +56,7 @@ func (h *Handler) UpdateScopePolicy(ctx echo.Context) error {
 		return err
 	}
 
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	var p *model.ScopePolicy
 	if existing != nil {
 		p = existing

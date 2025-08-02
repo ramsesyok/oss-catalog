@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -28,7 +30,7 @@ func TestOssVersionRepository_Search(t *testing.T) {
 	mock.ExpectQuery(countQuery).WithArgs(f.OssID).WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
 	listQuery := regexp.QuoteMeta("SELECT id, oss_id, version, release_date, license_expression_raw, license_concluded, purl, cpe_list, hash_sha256, modified, modification_description, review_status, last_reviewed_at, scope_status, supplier_type, fork_origin_url, created_at, updated_at FROM oss_versions WHERE oss_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?")
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	rows := sqlmock.NewRows([]string{"id", "oss_id", "version", "release_date", "license_expression_raw", "license_concluded", "purl", "cpe_list", "hash_sha256", "modified", "modification_description", "review_status", "last_reviewed_at", "scope_status", "supplier_type", "fork_origin_url", "created_at", "updated_at"}).
 		AddRow(uuid.NewString(), f.OssID, "1.0.0", now, nil, nil, nil, pq.StringArray{"cpe:/a"}, nil, false, nil, "draft", nil, "IN_SCOPE", nil, nil, now, now)
 	mock.ExpectQuery(listQuery).WithArgs(f.OssID, 10, 0).WillReturnRows(rows)
@@ -54,8 +56,8 @@ func TestOssVersionRepository_Create(t *testing.T) {
 		Modified:     false,
 		ReviewStatus: "draft",
 		ScopeStatus:  "IN_SCOPE",
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
+		CreatedAt:    dbtime.DBTime{Time: time.Now()},
+		UpdatedAt:    dbtime.DBTime{Time: time.Now()},
 	}
 
 	query := regexp.QuoteMeta("INSERT INTO oss_versions (id, oss_id, version, release_date, license_expression_raw, license_concluded, purl, cpe_list, hash_sha256, modified, modification_description, review_status, last_reviewed_at, scope_status, supplier_type, fork_origin_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
@@ -77,11 +79,11 @@ func TestOssVersionRepository_Update(t *testing.T) {
 
 	v := &model.OssVersion{
 		ID:           uuid.NewString(),
-		ReleaseDate:  func() *time.Time { t := time.Now(); return &t }(),
+		ReleaseDate:  func() *dbtime.DBTime { t := dbtime.DBTime{Time: time.Now()}; return &t }(),
 		Modified:     true,
 		ReviewStatus: "verified",
 		ScopeStatus:  "IN_SCOPE",
-		UpdatedAt:    time.Now(),
+		UpdatedAt:    dbtime.DBTime{Time: time.Now()},
 	}
 
 	query := regexp.QuoteMeta("UPDATE oss_versions SET release_date = ?, license_expression_raw = ?, license_concluded = ?, purl = ?, cpe_list = ?, hash_sha256 = ?, modified = ?, modification_description = ?, review_status = ?, last_reviewed_at = ?, scope_status = ?, supplier_type = ?, fork_origin_url = ?, updated_at = ? WHERE id = ?")

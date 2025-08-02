@@ -1,13 +1,13 @@
 package model
 
-import "time"
+import "github.com/ramsesyok/oss-catalog/pkg/dbtime"
 
 // OssVersion は OSS コンポーネントのバージョン情報を表す。
 type OssVersion struct {
 	ID                      string
 	OssID                   string
 	Version                 string
-	ReleaseDate             *time.Time
+	ReleaseDate             *dbtime.DBTime
 	LicenseExpressionRaw    *string
 	LicenseConcluded        *string
 	Purl                    *string
@@ -16,10 +16,10 @@ type OssVersion struct {
 	Modified                bool
 	ModificationDescription *string
 	ReviewStatus            string
-	LastReviewedAt          *time.Time
+	LastReviewedAt          *dbtime.DBTime
 	ScopeStatus             string
 	SupplierType            *string
 	ForkOriginURL           *string
-	CreatedAt               time.Time
-	UpdatedAt               time.Time
+	CreatedAt               dbtime.DBTime
+	UpdatedAt               dbtime.DBTime
 }

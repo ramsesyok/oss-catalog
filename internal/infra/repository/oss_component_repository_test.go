@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -27,7 +29,7 @@ func TestOssComponentRepository_Search(t *testing.T) {
 	mock.ExpectQuery(countQuery).WithArgs("%redis%").WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
 	listQuery := regexp.QuoteMeta("SELECT oc.id, oc.name, oc.normalized_name, oc.homepage_url, oc.repository_url, oc.description, oc.primary_language, oc.default_usage_role, oc.deprecated, oc.created_at, oc.updated_at FROM oss_components oc WHERE normalized_name LIKE ? ORDER BY oc.created_at DESC LIMIT ? OFFSET ?")
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	mock.ExpectQuery(listQuery).WithArgs("%redis%", 10, 0).WillReturnRows(sqlmock.NewRows([]string{"id", "name", "normalized_name", "homepage_url", "repository_url", "description", "primary_language", "default_usage_role", "deprecated", "created_at", "updated_at"}).AddRow(uuid.NewString(), "Redis", "redis", nil, nil, nil, nil, nil, false, now, now))
 
 	res, total, err := repo.Search(context.Background(), f)
@@ -49,8 +51,8 @@ func TestOssComponentRepository_Create(t *testing.T) {
 		Name:           "Redis",
 		NormalizedName: "redis",
 		Deprecated:     false,
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
+		CreatedAt:      dbtime.DBTime{Time: time.Now()},
+		UpdatedAt:      dbtime.DBTime{Time: time.Now()},
 	}
 
 	query := regexp.QuoteMeta("INSERT INTO oss_components (id, name, normalized_name, homepage_url, repository_url, description, primary_language, default_usage_role, deprecated, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")

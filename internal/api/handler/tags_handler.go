@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -15,7 +17,13 @@ import (
 )
 
 func toTag(m model.Tag) gen.Tag {
-	return gen.Tag{Id: uuid.MustParse(m.ID), Name: m.Name, CreatedAt: m.CreatedAt}
+	return gen.Tag{Id: uuid.MustParse(m.ID), Name: m.Name, CreatedAt: func() *time.Time {
+		if m.CreatedAt == nil {
+			return nil
+		}
+		t := m.CreatedAt.TimeValue()
+		return &t
+	}()}
 }
 
 // タグ一覧
@@ -39,7 +47,7 @@ func (h *Handler) CreateTag(ctx echo.Context) error {
 	if err := ctx.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid body")
 	}
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	tag := &model.Tag{ID: uuid.NewString(), Name: req.Name, CreatedAt: &now}
 	if err := h.TagRepo.Create(ctx.Request().Context(), tag); err != nil {
 		return err

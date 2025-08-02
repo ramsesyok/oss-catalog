@@ -21,6 +21,7 @@ import (
 	"github.com/ramsesyok/oss-catalog/internal/infra/repository"
 	"github.com/ramsesyok/oss-catalog/migrations"
 	"github.com/ramsesyok/oss-catalog/pkg/auth"
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
 )
 
 // Apply runs all up migrations using golang-migrate. If the schema is already up to date,
@@ -79,7 +80,7 @@ func ensureAdminUser(db *sql.DB) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	u := &model.User{
 		ID:           uuid.NewString(),
 		Username:     "admin",

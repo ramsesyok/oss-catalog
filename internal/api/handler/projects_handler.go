@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -23,8 +25,8 @@ func toProject(m model.Project) gen.Project {
 		Id:          uid,
 		ProjectCode: m.ProjectCode,
 		Name:        m.Name,
-		CreatedAt:   m.CreatedAt,
-		UpdatedAt:   m.UpdatedAt,
+		CreatedAt:   m.CreatedAt.TimeValue(),
+		UpdatedAt:   m.UpdatedAt.TimeValue(),
 	}
 	if m.Department != nil {
 		res.Department = m.Department
@@ -33,7 +35,7 @@ func toProject(m model.Project) gen.Project {
 		res.Manager = m.Manager
 	}
 	if m.DeliveryDate != nil {
-		res.DeliveryDate = &openapi_types.Date{Time: *m.DeliveryDate}
+		res.DeliveryDate = &openapi_types.Date{Time: m.DeliveryDate.TimeValue()}
 	}
 	if m.Description != nil {
 		res.Description = m.Description
@@ -57,13 +59,14 @@ func toProjectUsage(m model.ProjectUsage) gen.ProjectUsage {
 		UsageRole:        gen.UsageRole(m.UsageRole),
 		ScopeStatus:      gen.ScopeStatus(m.ScopeStatus),
 		DirectDependency: m.DirectDependency,
-		AddedAt:          m.AddedAt,
+		AddedAt:          m.AddedAt.TimeValue(),
 	}
 	if m.InclusionNote != nil {
 		res.InclusionNote = m.InclusionNote
 	}
 	if m.EvaluatedAt != nil {
-		res.EvaluatedAt = m.EvaluatedAt
+		t := m.EvaluatedAt.TimeValue()
+		res.EvaluatedAt = &t
 	}
 	if m.EvaluatedBy != nil {
 		res.EvaluatedBy = m.EvaluatedBy
@@ -135,7 +138,7 @@ func (h *Handler) CreateProject(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid body")
 	}
 
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	p := &model.Project{
 		ID:          uuid.NewString(),
 		ProjectCode: req.ProjectCode,
@@ -150,7 +153,7 @@ func (h *Handler) CreateProject(ctx echo.Context) error {
 		p.Manager = req.Manager
 	}
 	if req.DeliveryDate != nil {
-		t := req.DeliveryDate.Time
+		t := dbtime.DBTime{Time: req.DeliveryDate.Time}
 		p.DeliveryDate = &t
 	}
 	if req.Description != nil {
@@ -214,13 +217,13 @@ func (h *Handler) UpdateProject(ctx echo.Context, projectId openapi_types.UUID) 
 		p.Manager = req.Manager
 	}
 	if req.DeliveryDate != nil {
-		t := req.DeliveryDate.Time
+		t := dbtime.DBTime{Time: req.DeliveryDate.Time}
 		p.DeliveryDate = &t
 	}
 	if req.Description != nil {
 		p.Description = req.Description
 	}
-	p.UpdatedAt = time.Now()
+	p.UpdatedAt = dbtime.DBTime{Time: time.Now()}
 
 	if err := h.ProjectRepo.Update(ctx.Request().Context(), p); err != nil {
 		return err
@@ -283,7 +286,7 @@ func (h *Handler) CreateProjectUsage(ctx echo.Context, projectId openapi_types.U
 	if err := ctx.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid body")
 	}
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	policy, err := h.ScopePolicyRepo.Get(ctx.Request().Context())
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
@@ -360,7 +363,7 @@ func (h *Handler) UpdateProjectUsageScope(ctx echo.Context, projectId openapi_ty
 	if err := ctx.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid body")
 	}
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	evaluatedBy := "api-user"
 	if err := h.ProjectUsageRepo.UpdateScope(ctx.Request().Context(), usageId.String(), string(req.ScopeStatus), req.ReasonNote, now, &evaluatedBy); err != nil {
 		return err

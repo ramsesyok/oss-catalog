@@ -1,6 +1,6 @@
 package model
 
-import "time"
+import "github.com/ramsesyok/oss-catalog/pkg/dbtime"
 
 // ProjectUsage はプロジェクト内での OSS 利用状況を表す。
 type ProjectUsage struct {
@@ -12,8 +12,8 @@ type ProjectUsage struct {
 	ScopeStatus      string
 	InclusionNote    *string
 	DirectDependency bool
-	AddedAt          time.Time
-	EvaluatedAt      *time.Time
+	AddedAt          dbtime.DBTime
+	EvaluatedAt      *dbtime.DBTime
 	EvaluatedBy      *string
 }
 

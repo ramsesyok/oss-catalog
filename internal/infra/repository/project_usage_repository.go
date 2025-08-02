@@ -4,7 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
+
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
 
 	"github.com/ramsesyok/oss-catalog/internal/domain/model"
 	domrepo "github.com/ramsesyok/oss-catalog/internal/domain/repository"
@@ -89,7 +90,7 @@ func (r *ProjectUsageRepository) Delete(ctx context.Context, id string) error {
 }
 
 // UpdateScope はスコープ関連のフィールドのみ更新する。
-func (r *ProjectUsageRepository) UpdateScope(ctx context.Context, id string, scopeStatus string, inclusionNote *string, evaluatedAt time.Time, evaluatedBy *string) error {
+func (r *ProjectUsageRepository) UpdateScope(ctx context.Context, id string, scopeStatus string, inclusionNote *string, evaluatedAt dbtime.DBTime, evaluatedBy *string) error {
 	query := `UPDATE project_usages SET scope_status = ?, inclusion_note = ?, evaluated_at = ?, evaluated_by = ? WHERE id = ?`
 	_, err := r.DB.ExecContext(ctx, query, scopeStatus, inclusionNote, evaluatedAt, evaluatedBy, id)
 	return err

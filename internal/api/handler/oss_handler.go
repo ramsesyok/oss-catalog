@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ramsesyok/oss-catalog/pkg/dbtime"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -24,8 +26,8 @@ func toOssComponent(m model.OssComponent) gen.OssComponent {
 		Id:         uid,
 		Name:       m.Name,
 		Deprecated: m.Deprecated,
-		CreatedAt:  m.CreatedAt,
-		UpdatedAt:  m.UpdatedAt,
+		CreatedAt:  m.CreatedAt.TimeValue(),
+		UpdatedAt:  m.UpdatedAt.TimeValue(),
 	}
 	if m.NormalizedName != "" {
 		res.NormalizedName = &m.NormalizedName
@@ -73,11 +75,11 @@ func toOssVersion(m model.OssVersion) gen.OssVersion {
 		Modified:     m.Modified,
 		ReviewStatus: gen.ReviewStatus(m.ReviewStatus),
 		ScopeStatus:  gen.ScopeStatus(m.ScopeStatus),
-		CreatedAt:    m.CreatedAt,
-		UpdatedAt:    m.UpdatedAt,
+		CreatedAt:    m.CreatedAt.TimeValue(),
+		UpdatedAt:    m.UpdatedAt.TimeValue(),
 	}
 	if m.ReleaseDate != nil {
-		res.ReleaseDate = &openapi_types.Date{Time: *m.ReleaseDate}
+		res.ReleaseDate = &openapi_types.Date{Time: m.ReleaseDate.TimeValue()}
 	}
 	if m.LicenseExpressionRaw != nil {
 		res.LicenseExpressionRaw = m.LicenseExpressionRaw
@@ -100,7 +102,8 @@ func toOssVersion(m model.OssVersion) gen.OssVersion {
 		res.ModificationDescription = m.ModificationDescription
 	}
 	if m.LastReviewedAt != nil {
-		res.LastReviewedAt = m.LastReviewedAt
+		t := m.LastReviewedAt.TimeValue()
+		res.LastReviewedAt = &t
 	}
 	if m.SupplierType != nil {
 		val := gen.SupplierType(*m.SupplierType)
@@ -175,7 +178,7 @@ func (h *Handler) CreateOssComponent(ctx echo.Context) error {
 	if err := ctx.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid body")
 	}
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	id := uuid.NewString()
 	comp := &model.OssComponent{
 		ID:              id,
@@ -291,7 +294,7 @@ func (h *Handler) CreateOssVersion(ctx echo.Context, ossId openapi_types.UUID) e
 	if err := ctx.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid body")
 	}
-	now := time.Now()
+	now := dbtime.DBTime{Time: time.Now()}
 	v := &model.OssVersion{
 		ID:           uuid.NewString(),
 		OssID:        ossId.String(),
@@ -302,7 +305,7 @@ func (h *Handler) CreateOssVersion(ctx echo.Context, ossId openapi_types.UUID) e
 		UpdatedAt:    now,
 	}
 	if req.ReleaseDate != nil {
-		t := req.ReleaseDate.Time
+		t := dbtime.DBTime{Time: req.ReleaseDate.Time}
 		v.ReleaseDate = &t
 	}
 	if req.LicenseExpressionRaw != nil {
@@ -375,7 +378,7 @@ func (h *Handler) UpdateOssVersion(ctx echo.Context, ossId openapi_types.UUID, v
 		return err
 	}
 	if req.ReleaseDate != nil {
-		t := req.ReleaseDate.Time
+		t := dbtime.DBTime{Time: req.ReleaseDate.Time}
 		v.ReleaseDate = &t
 	}
 	if req.LicenseExpressionRaw != nil {
@@ -412,7 +415,7 @@ func (h *Handler) UpdateOssVersion(ctx echo.Context, ossId openapi_types.UUID, v
 	if req.ForkOriginUrl != nil {
 		v.ForkOriginURL = req.ForkOriginUrl
 	}
-	v.UpdatedAt = time.Now()
+	v.UpdatedAt = dbtime.DBTime{Time: time.Now()}
 	if err := h.OssVersionRepo.Update(ctx.Request().Context(), v); err != nil {
 		return err
 	}

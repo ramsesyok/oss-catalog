@@ -1,6 +1,6 @@
 package model
 
-import "time"
+import "github.com/ramsesyok/oss-catalog/pkg/dbtime"
 
 // ScopePolicy は自動スコープ判定のポリシーを表す。
 type ScopePolicy struct {
@@ -8,6 +8,6 @@ type ScopePolicy struct {
 	RuntimeRequiredDefaultInScope bool
 	ServerEnvIncluded             bool
 	AutoMarkForksInScope          bool
-	UpdatedAt                     time.Time
+	UpdatedAt                     dbtime.DBTime
 	UpdatedBy                     string
 }
