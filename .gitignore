@@ -35,3 +35,4 @@ admin.initial.password
 .vscode/
 .venv
 oss-catalog.db
+oss-catalog-test
